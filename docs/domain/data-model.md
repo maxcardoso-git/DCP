@@ -10,7 +10,7 @@ Primary store: PostgreSQL. Designed for immutable auditing and idempotent pause/
   - Fields: `decision_id` (fk), `summary` (text), `detailed_explanation` (jsonb), `model_used`, `prompt_version`.
   - Indexing: `gin` on `detailed_explanation` for trace queries.
 - `decision_action` — append-only log of human/policy actions.
-  - Fields: `id` (uuid), `decision_id` (fk), `action_type` (enum), `actor_type` (enum), `actor_id`, `comment`, `created_at`.
+  - Fields: `id` (uuid), `decision_id` (fk), `action_type` (enum), `actor_type` (enum), `actor_id`, `comment`, `payload` (jsonb for structured modifications), `created_at`.
   - Indexing: `(decision_id, created_at)` for timeline queries.
 - `decision_policy_snapshot` — captures rules evaluated at gate time for auditability.
   - Fields: `decision_id` (fk), `policy_version`, `evaluated_rules` (jsonb), `result`.

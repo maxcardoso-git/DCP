@@ -46,10 +46,18 @@ Independent, API-first control-plane application that governs, supervises, and o
 - Inbound: `orchestrator.execution.context`, `orchestrator.signal.trism`, `orchestrator.signal.prism`, `orchestrator.execution.resume.ack`.
 - Contracts and examples in `docs/api/events.md`.
 
-## Deployment (docs container)
-- Build and serve docs via Docker/nginx: `docker build -t dcp-docs .` then `docker run -d -p 8080:80 dcp-docs`.
-- Compose shortcut: `docker compose up -d` (see `compose.yaml`); override port with `PORT=8081 docker compose up -d` if 8080 is busy.
-- Details in `docs/deploy.md`.
+## Running the stack (API + UI + DB + docs)
+- Prereqs: Docker + Docker Compose plugin.
+- Defaults (can override with env): API on host `8110`, UI on `8100`, docs on `8080` (set `PORT=8090` on shared host), Postgres exposed on `55435`.
+- One-liner: `docker compose up -d` (builds backend, frontend, docs, and starts Postgres).
+- Environment knobs:
+  - `HOST_API_PORT` (default 8110) maps to FastAPI’s `APP_PORT` (default 8000).
+  - `HOST_FRONTEND_PORT` (default 8100) serves the React UI preview.
+  - `PORT` (default 8080) serves docs.
+  - `DATABASE_URL` to point API at a different Postgres.
+- API OpenAPI: `http://localhost:8110/api/v2/dcp/openapi.json`
+- UI (React preview): `http://localhost:8100` (calls API via `VITE_API_BASE`, default `http://dcp-api:8000/api/v2/dcp` in container).
+- Docs landing page: `http://localhost:8080` (or your `PORT` override).
 
 ## Non-functional & Observability
 - Availability: 99.9%. Latency targets: decision creation ≤200 ms, decision action ≤300 ms.

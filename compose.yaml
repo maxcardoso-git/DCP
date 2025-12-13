@@ -1,6 +1,44 @@
 services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: dcp
+      POSTGRES_PASSWORD: dcp
+      POSTGRES_DB: dcp
+    ports:
+      - "${HOST_DB_PORT:-55435}:5432"
+    volumes:
+      - dcp-db-data:/var/lib/postgresql/data
+
+  dcp-api:
+    build:
+      context: backend
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://dcp:dcp@db:5432/dcp}
+      APP_PORT: ${APP_PORT:-8000}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-*}
+      API_PREFIX: /api/v2/dcp
+    depends_on:
+      - db
+    ports:
+      - "${HOST_API_PORT:-8110}:${APP_PORT:-8000}"
+
+  dcp-frontend:
+    build:
+      context: frontend
+    environment:
+      VITE_API_BASE: ${VITE_API_BASE:-http://dcp-api:8000/api/v2/dcp}
+    depends_on:
+      - dcp-api
+    ports:
+      - "${HOST_FRONTEND_PORT:-8100}:4173"
+    command: ["npm", "run", "preview", "--", "--host", "0.0.0.0", "--port", "4173"]
+
   dcp-docs:
     build: .
     ports:
       - "${PORT:-8080}:80"
     restart: unless-stopped
+
+volumes:
+  dcp-db-data:

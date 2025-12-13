@@ -1,0 +1,22 @@
+{
+  "decision.inbox": "Caixa de decisões",
+  "decision.details": "Detalhes da decisão",
+  "decision.approve": "Aprovar",
+  "decision.reject": "Rejeitar",
+  "decision.modify": "Modificar",
+  "decision.escalate": "Escalar",
+  "decision.override": "Sobrescrever",
+  "status.pending_human_review": "Aguardando revisão humana",
+  "status.approved": "Aprovada",
+  "status.rejected": "Rejeitada",
+  "status.modified": "Modificada",
+  "status.escalated": "Escalada",
+  "status.expired": "Expirada",
+  "status.executed": "Executada",
+  "status.created": "Criada",
+  "action.comment.placeholder": "Adicione um comentário (opcional)",
+  "messages.sla_warning": "Esta decisão irá expirar em breve.",
+  "messages.paused": "Execução pausada aguardando revisão.",
+  "messages.resumed": "Execução retomada.",
+  "messages.expired": "Decisão expirada sem ação."
+}

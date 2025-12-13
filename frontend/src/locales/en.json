@@ -1,0 +1,22 @@
+{
+  "decision.inbox": "Decision Inbox",
+  "decision.details": "Decision Details",
+  "decision.approve": "Approve",
+  "decision.reject": "Reject",
+  "decision.modify": "Modify",
+  "decision.escalate": "Escalate",
+  "decision.override": "Override",
+  "status.pending_human_review": "Pending human review",
+  "status.approved": "Approved",
+  "status.rejected": "Rejected",
+  "status.modified": "Modified",
+  "status.escalated": "Escalated",
+  "status.expired": "Expired",
+  "status.executed": "Executed",
+  "status.created": "Created",
+  "action.comment.placeholder": "Add a comment (optional)",
+  "messages.sla_warning": "This decision will expire soon.",
+  "messages.paused": "Execution paused awaiting review.",
+  "messages.resumed": "Execution resumed.",
+  "messages.expired": "Decision expired without action."
+}
