@@ -79,6 +79,86 @@
       color: var(--muted);
       font-size: 13px;
     }
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 8, 20, 0.75);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      padding: 24px;
+    }
+    .modal.active {
+      display: flex;
+    }
+    .modal-content {
+      background: #0b1224;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      width: min(1100px, 96vw);
+      max-height: 90vh;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.03);
+    }
+    .modal-header h3 {
+      margin: 0;
+      font-size: 16px;
+      color: var(--text);
+    }
+    .close-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 6px 10px;
+      cursor: pointer;
+      transition: border-color 120ms ease, transform 120ms ease;
+    }
+    .close-btn:hover {
+      border-color: rgba(141, 211, 255, 0.5);
+      transform: translateY(-1px);
+    }
+    .modal-body {
+      padding: 0;
+      overflow: auto;
+      background: #0a1020;
+    }
+    .viewer {
+      padding: 16px;
+      color: var(--text);
+    }
+    .viewer pre {
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      background: #0c162d;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      overflow-x: auto;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .viewer h1, .viewer h2, .viewer h3, .viewer h4 {
+      margin-top: 18px;
+      margin-bottom: 8px;
+    }
+    .viewer p, .viewer ul {
+      color: var(--text);
+      line-height: 1.5;
+    }
+    .viewer a { color: var(--accent); }
   </style>
 </head>
 <body>
@@ -124,6 +204,79 @@
       <p>Spanish strings.</p>
     </a>
   </main>
+  <div class="modal" id="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modal-title">Loading…</h3>
+        <button class="close-btn" id="modal-close">Close</button>
+      </div>
+      <div class="modal-body">
+        <div class="viewer" id="modal-viewer">
+          <pre>Loading…</pre>
+        </div>
+      </div>
+    </div>
+  </div>
   <footer>Served via nginx container · API-first · Multi-language · Human-in-the-loop</footer>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script>
+    const modal = document.getElementById('modal');
+    const modalTitle = document.getElementById('modal-title');
+    const modalViewer = document.getElementById('modal-viewer');
+    const closeBtn = document.getElementById('modal-close');
+
+    const openModal = (title, html) => {
+      modalTitle.textContent = title;
+      modalViewer.innerHTML = html;
+      modal.classList.add('active');
+    };
+
+    const renderContent = (path, text) => {
+      const lower = path.toLowerCase();
+      if (lower.endsWith('.md')) {
+        if (window.marked) {
+          const safeHtml = marked.parse(text);
+          return `<div class="md">${safeHtml}</div>`;
+        }
+        return `<pre>${text}</pre>`;
+      }
+      if (lower.endsWith('.json') || lower.endsWith('.yaml') || lower.endsWith('.yml')) {
+        return `<pre>${escapeHtml(text)}</pre>`;
+      }
+      return `<pre>${escapeHtml(text)}</pre>`;
+    };
+
+    const escapeHtml = (str) =>
+      str.replace(/&/g, '&amp;')
+         .replace(/</g, '&lt;')
+         .replace(/>/g, '&gt;')
+         .replace(/"/g, '&quot;')
+         .replace(/'/g, '&#39;');
+
+    document.querySelectorAll('a.card').forEach(link => {
+      link.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const href = link.getAttribute('href');
+        openModal(href, '<pre>Loading…</pre>');
+        try {
+          const res = await fetch(href);
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const text = await res.text();
+          const html = renderContent(href, text);
+          openModal(href, html);
+        } catch (err) {
+          openModal(href, `<pre>Failed to load: ${err.message}</pre>`);
+        }
+      });
+    });
+
+    closeBtn.addEventListener('click', () => modal.classList.remove('active'));
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) modal.classList.remove('active');
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') modal.classList.remove('active');
+    });
+  </script>
 </body>
 </html>
