@@ -15,7 +15,9 @@ docker run -d --name dcp-docs -p 8080:80 dcp-docs:latest
 
 Or with Compose:
 ```bash
-docker compose up -d
+docker compose up -d           # default port 8080
+# or override port if 8080 is busy
+PORT=8081 docker compose up -d
 ```
 
 ## Remote deployment (example: root@72.61.52.70)

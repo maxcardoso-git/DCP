@@ -48,7 +48,7 @@ Independent, API-first control-plane application that governs, supervises, and o
 
 ## Deployment (docs container)
 - Build and serve docs via Docker/nginx: `docker build -t dcp-docs .` then `docker run -d -p 8080:80 dcp-docs`.
-- Compose shortcut: `docker compose up -d` (see `compose.yaml`).
+- Compose shortcut: `docker compose up -d` (see `compose.yaml`); override port with `PORT=8081 docker compose up -d` if 8080 is busy.
 - Details in `docs/deploy.md`.
 
 ## Non-functional & Observability
