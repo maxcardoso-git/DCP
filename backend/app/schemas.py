@@ -55,19 +55,14 @@ class DecisionRecommendationOut(BaseModel):
     detailed_explanation: Optional[dict[str, Any]] = None
     model_used: Optional[str] = None
     prompt_version: Optional[str] = None
-    model_config = ConfigDict(protected_namespaces=())
-
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(protected_namespaces=(), from_attributes=True)
 
 
 class DecisionPolicySnapshotOut(BaseModel):
     policy_version: Optional[str] = None
     evaluated_rules: Optional[dict[str, Any]] = None
     result: Optional[str] = None
-
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class DecisionActionOut(BaseModel):
@@ -78,9 +73,7 @@ class DecisionActionOut(BaseModel):
     comment: Optional[str] = None
     payload: Optional[dict[str, Any]] = None
     created_at: datetime
-
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class DecisionOut(BaseModel):
@@ -98,9 +91,7 @@ class DecisionOut(BaseModel):
     recommendation: Optional[DecisionRecommendationOut] = None
     policy_snapshot: Optional[DecisionPolicySnapshotOut] = None
     actions: list[DecisionActionOut] = Field(default_factory=list)
-
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class DecisionListOut(BaseModel):
