@@ -57,6 +57,7 @@ Independent, API-first control-plane application that governs, supervises, and o
   - `PORT` (default 8080) serves docs.
   - `DATABASE_URL` to point API at a different Postgres.
   - `BEARER_TOKEN` to require `Authorization: Bearer <token>` on API calls.
+  - `VITE_API_BASE` (frontend) to point browser to the public API host; defaults to `http://<frontend-hostname>:8110/api/v2/dcp`.
 - API OpenAPI: `http://localhost:8110/api/v2/dcp/openapi.json`
 - UI (React preview): `http://localhost:8100` (calls API via `VITE_API_BASE`, default `http://dcp-api:8000/api/v2/dcp` in container).
 - Docs landing page: `http://localhost:8080` (or your `PORT` override).

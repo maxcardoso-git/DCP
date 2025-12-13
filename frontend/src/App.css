@@ -29,6 +29,21 @@ h1 {
   letter-spacing: -0.5px;
 }
 
+.brand {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.logo {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  object-fit: cover;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+
 .muted {
   color: #94a3b8;
 }

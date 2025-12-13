@@ -93,13 +93,16 @@ function App() {
   return (
     <div className="page">
       <header>
-        <div>
-          <p className="eyebrow">Decision Control Plane · v2</p>
-          <h1>{t("decision.inbox")}</h1>
-          <p className="muted">
-            API-connected inbox for human-in-the-loop decisions. Use the sample gate to simulate incoming pauses or call the
-            API directly.
-          </p>
+        <div className="brand">
+          <img src="/logo.png" alt="DCP logo" className="logo" />
+          <div>
+            <p className="eyebrow">Decision Control Plane · v2</p>
+            <h1>{t("decision.inbox")}</h1>
+            <p className="muted">
+              API-connected inbox for human-in-the-loop decisions. Use the sample gate to simulate incoming pauses or call the
+              API directly.
+            </p>
+          </div>
         </div>
         <div className="controls">
           <select value={lang} onChange={(e) => setLang(e.target.value)}>

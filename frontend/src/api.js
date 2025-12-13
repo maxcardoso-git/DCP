@@ -1,4 +1,10 @@
-const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8110/api/v2/dcp";
+const inferredBase = (() => {
+  if (import.meta.env.VITE_API_BASE) return import.meta.env.VITE_API_BASE;
+  const host = typeof window !== "undefined" ? window.location.hostname : "localhost";
+  return `http://${host}:8110/api/v2/dcp`;
+})();
+
+const API_BASE = inferredBase;
 
 async function request(path, options = {}) {
   const res = await fetch(`${API_BASE}${path}`, {
