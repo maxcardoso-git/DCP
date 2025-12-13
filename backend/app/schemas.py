@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Any, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 DecisionStatus = str
@@ -15,6 +15,7 @@ class DecisionRecommendationIn(BaseModel):
     detailed_explanation: Optional[dict[str, Any]] = None
     model_used: Optional[str] = None
     prompt_version: Optional[str] = None
+    model_config = ConfigDict(protected_namespaces=())
 
 
 class DecisionPolicySnapshotIn(BaseModel):
@@ -54,6 +55,7 @@ class DecisionRecommendationOut(BaseModel):
     detailed_explanation: Optional[dict[str, Any]] = None
     model_used: Optional[str] = None
     prompt_version: Optional[str] = None
+    model_config = ConfigDict(protected_namespaces=())
 
     class Config:
         from_attributes = True
