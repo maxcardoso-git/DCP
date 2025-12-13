@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+.Python
+.venv
+env/
+venv/
+.env
+.env.*
+
+backend/.venv/
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
