@@ -1,0 +1,22 @@
+{
+  "decision.inbox": "Bandeja de decisiones",
+  "decision.details": "Detalles de la decisión",
+  "decision.approve": "Aprobar",
+  "decision.reject": "Rechazar",
+  "decision.modify": "Modificar",
+  "decision.escalate": "Escalar",
+  "decision.override": "Sobrescribir",
+  "status.pending_human_review": "Pendiente de revisión humana",
+  "status.approved": "Aprobada",
+  "status.rejected": "Rechazada",
+  "status.modified": "Modificada",
+  "status.escalated": "Escalada",
+  "status.expired": "Expirada",
+  "status.executed": "Ejecutada",
+  "status.created": "Creada",
+  "action.comment.placeholder": "Agrega un comentario (opcional)",
+  "messages.sla_warning": "Esta decisión expirará pronto.",
+  "messages.paused": "Ejecución pausada en espera de revisión.",
+  "messages.resumed": "Ejecución reanudada.",
+  "messages.expired": "Decisión expirada sin acción."
+}

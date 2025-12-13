@@ -1,0 +1,6 @@
+services:
+  dcp-docs:
+    build: .
+    ports:
+      - "8080:80"
+    restart: unless-stopped

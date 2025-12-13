@@ -1,0 +1,300 @@
+openapi: 3.0.3
+info:
+  title: Decision Control Plane API
+  version: "2.0.0"
+  description: API-first control-plane for governing human/AI decisions alongside Orchestrator AI.
+servers:
+  - url: /api/v2/dcp
+    description: DCP base path (sidecar deployment)
+tags:
+  - name: decision-gates
+    description: Create decision checkpoints and pause orchestrations.
+  - name: decisions
+    description: Act on pending decisions (human or policy-driven).
+paths:
+  /decision-gates:
+    post:
+      tags: [decision-gates]
+      summary: Create a decision gate and pause execution.
+      operationId: createDecisionGate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DecisionGateCreateRequest'
+      responses:
+        "201":
+          description: Gate created; orchestration paused.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Decision'
+        "400":
+          $ref: '#/components/responses/BadRequest'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+  /decisions:
+    get:
+      tags: [decisions]
+      summary: List decisions (default filter pending).
+      operationId: listPendingDecisions
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [pending_human_review, approved, rejected, modified, escalated, expired, executed]
+          description: Filter by status; default pending_human_review.
+        - in: query
+          name: language
+          schema:
+            type: string
+            example: en
+          description: Language preference for localized fields; falls back to default.
+      responses:
+        "200":
+          description: List of decisions.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Decision'
+  /decisions/{id}/approve:
+    post:
+      tags: [decisions]
+      summary: Approve a decision.
+      operationId: approveDecision
+      parameters:
+        - $ref: '#/components/parameters/DecisionId'
+      requestBody:
+        $ref: '#/components/requestBodies/DecisionActionBody'
+      responses:
+        "200":
+          description: Decision approved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Decision'
+  /decisions/{id}/reject:
+    post:
+      tags: [decisions]
+      summary: Reject a decision.
+      operationId: rejectDecision
+      parameters:
+        - $ref: '#/components/parameters/DecisionId'
+      requestBody:
+        $ref: '#/components/requestBodies/DecisionActionBody'
+      responses:
+        "200":
+          description: Decision rejected.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Decision'
+  /decisions/{id}/modify:
+    post:
+      tags: [decisions]
+      summary: Modify a decision with human adjustments.
+      operationId: modifyDecision
+      parameters:
+        - $ref: '#/components/parameters/DecisionId'
+      requestBody:
+        $ref: '#/components/requestBodies/DecisionModifyBody'
+      responses:
+        "200":
+          description: Decision modified.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Decision'
+  /decisions/{id}/escalate:
+    post:
+      tags: [decisions]
+      summary: Escalate a decision according to policy or human trigger.
+      operationId: escalateDecision
+      parameters:
+        - $ref: '#/components/parameters/DecisionId'
+      requestBody:
+        $ref: '#/components/requestBodies/DecisionActionBody'
+      responses:
+        "200":
+          description: Decision escalated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Decision'
+components:
+  securitySchemes:
+    oidcAuth:
+      type: openIdConnect
+      openIdConnectUrl: https://orchestrator-ai.example.com/.well-known/openid-configuration
+  parameters:
+    DecisionId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  requestBodies:
+    DecisionActionBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              actor_id:
+                type: string
+              actor_type:
+                type: string
+                enum: [human, system, policy]
+              comment:
+                type: string
+              language:
+                type: string
+                description: Preferred language for notifications or UI context.
+    DecisionModifyBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [modifications]
+            properties:
+              actor_id:
+                type: string
+              modifications:
+                type: object
+                additionalProperties: true
+                description: Domain-specific payload to adjust the decision outcome before resume.
+              comment:
+                type: string
+  responses:
+    BadRequest:
+      description: Validation error.
+    Unauthorized:
+      description: Authentication failed.
+  schemas:
+    DecisionGateCreateRequest:
+      type: object
+      required: [execution_id, flow_id, node_id, language, recommendation]
+      properties:
+        execution_id:
+          type: string
+          format: uuid
+        flow_id:
+          type: string
+        node_id:
+          type: string
+        language:
+          type: string
+          description: ISO language key (en, pt-BR, es); defaults to en.
+          example: en
+        risk_score:
+          type: number
+          format: float
+        confidence_score:
+          type: number
+          format: float
+        estimated_cost:
+          type: number
+          format: double
+        impact_level:
+          type: string
+          enum: [low, medium, high, critical]
+        compliance_flags:
+          type: array
+          items:
+            type: string
+        recommendation:
+          $ref: '#/components/schemas/DecisionRecommendation'
+        policy_snapshot:
+          $ref: '#/components/schemas/DecisionPolicySnapshot'
+    Decision:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        execution_id:
+          type: string
+          format: uuid
+        flow_id:
+          type: string
+        node_id:
+          type: string
+        status:
+          type: string
+          enum: [created, pending_human_review, approved, rejected, modified, escalated, expired, executed]
+        language:
+          type: string
+        risk_score:
+          type: number
+        confidence_score:
+          type: number
+        estimated_cost:
+          type: number
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        recommendation:
+          $ref: '#/components/schemas/DecisionRecommendation'
+        policy_snapshot:
+          $ref: '#/components/schemas/DecisionPolicySnapshot'
+        actions:
+          type: array
+          items:
+            $ref: '#/components/schemas/DecisionAction'
+    DecisionRecommendation:
+      type: object
+      properties:
+        summary:
+          type: string
+        detailed_explanation:
+          type: object
+          description: JSON structure holding model reasoning, citations, or trace.
+        model_used:
+          type: string
+        prompt_version:
+          type: string
+    DecisionAction:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        action_type:
+          type: string
+          enum: [approve, reject, modify, escalate]
+        actor_type:
+          type: string
+          enum: [human, system, policy]
+        actor_id:
+          type: string
+        comment:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+    DecisionPolicySnapshot:
+      type: object
+      properties:
+        policy_version:
+          type: string
+        evaluated_rules:
+          type: object
+          description: JSON of rules and outcomes used at gate time.
+        result:
+          type: string
+          enum: [auto_approve, require_human, force_escalation]
+security:
+  - oidcAuth: []
