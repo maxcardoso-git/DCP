@@ -7,6 +7,7 @@ class Settings(BaseModel):
     app_port: int = Field(default=8000)
     allowed_origins: list[str] = Field(default_factory=lambda: ["*"])
     api_prefix: str = "/api/v2/dcp"
+    bearer_token: str | None = None
 
 
 def get_settings() -> Settings:
@@ -15,4 +16,5 @@ def get_settings() -> Settings:
         app_port=int(os.getenv("APP_PORT", Settings.model_fields["app_port"].default)),
         allowed_origins=os.getenv("ALLOWED_ORIGINS", "*").split(","),
         api_prefix=os.getenv("API_PREFIX", Settings.model_fields["api_prefix"].default),
+        bearer_token=os.getenv("BEARER_TOKEN"),
     )

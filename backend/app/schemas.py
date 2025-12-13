@@ -96,3 +96,4 @@ class DecisionOut(BaseModel):
 
 class DecisionListOut(BaseModel):
     items: list[DecisionOut]
+    total: int

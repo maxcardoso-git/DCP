@@ -12,8 +12,12 @@ async function request(path, options = {}) {
   return res.json();
 }
 
-export async function listDecisions(status = "pending_human_review") {
-  return request(`/decisions?status=${encodeURIComponent(status)}`);
+export async function listDecisions(status = "pending_human_review", limit = 50, offset = 0) {
+  return request(
+    `/decisions?status=${encodeURIComponent(status)}&limit=${encodeURIComponent(limit)}&offset=${encodeURIComponent(
+      offset
+    )}`
+  );
 }
 
 export async function createDecisionGate(payload) {

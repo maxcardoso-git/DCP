@@ -170,6 +170,13 @@ textarea {
   padding: 6px 0;
 }
 
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 12px 0 18px;
+}
+
 .status-approved {
   border-color: rgba(74, 222, 128, 0.6);
   background: rgba(74, 222, 128, 0.12);

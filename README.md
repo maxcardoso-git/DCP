@@ -23,8 +23,9 @@ Independent, API-first control-plane application that governs, supervises, and o
 - Audit & traceability: decision versioning, actor trace, timestamped events, immutable logs.
 
 ## API (base path `/api/v2/dcp`)
-- REST: POST `/decision-gates`, GET `/decisions?status=pending`, POST `/decisions/{id}/approve|reject|modify|escalate`. See `docs/api/openapi.yaml`.
+- REST: POST `/decision-gates`, GET `/decisions?status=pending&limit&offset`, POST `/decisions/{id}/approve|reject|modify|escalate`, POST `/policy/evaluate`. See `docs/api/openapi.yaml`.
 - Async events: publishes pause/resume/override/human-approval events to Orchestrator; see `docs/api/events.md`.
+- Auth: optional bearer guard. Set `BEARER_TOKEN` env to enforce `Authorization: Bearer <token>`.
 
 ## Data Model (PostgreSQL)
 - decision: id (uuid), execution_id (uuid), flow_id, node_id, status (enum), language, risk_score (float), confidence_score (float), estimated_cost (decimal), created_at, expires_at.
@@ -55,6 +56,7 @@ Independent, API-first control-plane application that governs, supervises, and o
   - `HOST_FRONTEND_PORT` (default 8100) serves the React UI preview.
   - `PORT` (default 8080) serves docs.
   - `DATABASE_URL` to point API at a different Postgres.
+  - `BEARER_TOKEN` to require `Authorization: Bearer <token>` on API calls.
 - API OpenAPI: `http://localhost:8110/api/v2/dcp/openapi.json`
 - UI (React preview): `http://localhost:8100` (calls API via `VITE_API_BASE`, default `http://dcp-api:8000/api/v2/dcp` in container).
 - Docs landing page: `http://localhost:8080` (or your `PORT` override).

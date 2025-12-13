@@ -25,9 +25,13 @@ const initialGate = {
 
 function App() {
   const [decisions, setDecisions] = useState([]);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [lang, setLang] = useState("en");
+  const [statusFilter, setStatusFilter] = useState("pending_human_review");
+  const [limit] = useState(20);
+  const [offset, setOffset] = useState(0);
   const [creating, setCreating] = useState(false);
   const [comment, setComment] = useState("");
 
@@ -39,8 +43,9 @@ function App() {
     setLoading(true);
     setError("");
     try {
-      const data = await listDecisions();
+      const data = await listDecisions(statusFilter, limit, offset);
       setDecisions(data.items || []);
+      setTotal(data.total || 0);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -50,7 +55,7 @@ function App() {
 
   useEffect(() => {
     fetchDecisions();
-  }, []);
+  }, [statusFilter, offset]);
 
   const handleAction = async (id, actionFn, extraPayload = {}) => {
     try {
@@ -104,7 +109,16 @@ function App() {
               </option>
             ))}
           </select>
-          <button onClick={fetchDecisions} disabled={loading}>
+          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+            {["pending_human_review", "approved", "rejected", "modified", "escalated", "expired", "executed"].map(
+              (s) => (
+                <option key={s} value={s}>
+                  {statusText(s)}
+                </option>
+              )
+            )}
+          </select>
+          <button onClick={() => { setOffset(0); fetchDecisions(); }} disabled={loading}>
             Refresh
           </button>
           <button onClick={createSampleGate} disabled={creating}>
@@ -118,6 +132,20 @@ function App() {
       <div className="comment-box">
         <label>{t("action.comment.placeholder")}</label>
         <textarea value={comment} onChange={(e) => setComment(e.target.value)} placeholder={t("action.comment.placeholder")} />
+      </div>
+
+      <div className="pagination">
+        <span className="muted">
+          Showing {decisions.length} of {total} ({statusText(statusFilter)})
+        </span>
+        <div className="controls">
+          <button disabled={offset === 0 || loading} onClick={() => setOffset(Math.max(0, offset - limit))}>
+            Prev
+          </button>
+          <button disabled={offset + limit >= total || loading} onClick={() => setOffset(offset + limit)}>
+            Next
+          </button>
+        </div>
       </div>
 
       {loading ? (

@@ -1,7 +1,7 @@
 from typing import Optional
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -61,13 +61,17 @@ async def create_decision(session: AsyncSession, payload: schemas.DecisionCreate
 async def list_decisions(
     session: AsyncSession,
     status: Optional[str] = None,
-) -> list[models.Decision]:
+    limit: int = 50,
+    offset: int = 0,
+) -> tuple[list[models.Decision], int]:
     stmt = select(models.Decision)
     if status:
         stmt = stmt.where(models.Decision.status == status)
     stmt = stmt.order_by(models.Decision.created_at.desc())
+    total = await session.scalar(select(func.count()).select_from(stmt.subquery()))
+    stmt = stmt.limit(limit).offset(offset)
     result = await session.execute(stmt)
-    return result.scalars().unique().all()
+    return result.scalars().unique().all(), total or 0
 
 
 async def _add_action_and_update_status(
