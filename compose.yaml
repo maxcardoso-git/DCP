@@ -9,6 +9,11 @@ services:
       - "${HOST_DB_PORT:-55435}:5432"
     volumes:
       - dcp-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dcp"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
 
   dcp-api:
     build:
@@ -19,7 +24,8 @@ services:
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-*}
       API_PREFIX: /api/v2/dcp
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     ports:
       - "${HOST_API_PORT:-8110}:${APP_PORT:-8000}"
 
