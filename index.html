@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Decision Control Plane · Docs</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: rgba(255, 255, 255, 0.08);
+      --accent: #8dd3ff;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --border: rgba(255, 255, 255, 0.12);
+      --shadow: 0 10px 40px rgba(0, 0, 0, 0.35);
+      --radius: 14px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Space Grotesk", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      background: radial-gradient(circle at 20% 20%, rgba(141, 211, 255, 0.12), transparent 35%), radial-gradient(circle at 80% 0%, rgba(125, 106, 255, 0.12), transparent 40%), var(--bg);
+      color: var(--text);
+    }
+    header {
+      padding: 56px 32px 24px;
+      text-align: center;
+    }
+    h1 {
+      margin: 0;
+      font-size: 32px;
+      letter-spacing: -0.5px;
+    }
+    p.lede {
+      margin: 12px auto 0;
+      max-width: 720px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    .grid {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      padding: 16px 24px 40px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 18px 14px;
+      box-shadow: var(--shadow);
+      transition: transform 120ms ease, border-color 160ms ease;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+      height: 100%;
+    }
+    .card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(141, 211, 255, 0.4);
+    }
+    .card h2 {
+      margin: 0 0 6px;
+      font-size: 18px;
+      letter-spacing: -0.2px;
+    }
+    .card p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.45;
+      font-size: 14px;
+    }
+    footer {
+      text-align: center;
+      padding: 12px 0 24px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Decision Control Plane · v2</h1>
+    <p class="lede">API-first control-plane for governing human + AI decisions alongside Orchestrator AI. Quick links to specs, event contracts, policy DSL, data model, and i18n bundles.</p>
+  </header>
+  <main class="grid">
+    <a class="card" href="README.md">
+      <h2>Overview</h2>
+      <p>Goals, architecture, runtime behavior, non-functionals, and deployment notes.</p>
+    </a>
+    <a class="card" href="docs/api/openapi.yaml">
+      <h2>OpenAPI</h2>
+      <p>REST contract for decision gates and actions (base path /api/v2/dcp).</p>
+    </a>
+    <a class="card" href="docs/api/events.md">
+      <h2>Event Contracts</h2>
+      <p>CloudEvents schemas for pause/resume/actioned/expired and inbound signals.</p>
+    </a>
+    <a class="card" href="docs/policy/dsl.md">
+      <h2>Policy DSL</h2>
+      <p>Rule syntax, operators, and evaluation semantics for auto/human/escalation.</p>
+    </a>
+    <a class="card" href="docs/domain/data-model.md">
+      <h2>Data Model</h2>
+      <p>PostgreSQL schema, enums, indexes, and governance notes.</p>
+    </a>
+    <a class="card" href="docs/i18n/README.md">
+      <h2>I18n Strategy</h2>
+      <p>Locale negotiation and key-based bundles.</p>
+    </a>
+    <a class="card" href="i18n/en.json">
+      <h2>Locale · en</h2>
+      <p>English strings for UI and notifications.</p>
+    </a>
+    <a class="card" href="i18n/pt-BR.json">
+      <h2>Locale · pt-BR</h2>
+      <p>Portuguese (Brazil) strings.</p>
+    </a>
+    <a class="card" href="i18n/es.json">
+      <h2>Locale · es</h2>
+      <p>Spanish strings.</p>
+    </a>
+  </main>
+  <footer>Served via nginx container · API-first · Multi-language · Human-in-the-loop</footer>
+</body>
+</html>
