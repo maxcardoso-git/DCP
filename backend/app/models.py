@@ -51,9 +51,27 @@ class Decision(Base):
     created_at = Column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
     expires_at = Column(DateTime(timezone=True), nullable=True)
 
-    recommendation = relationship("DecisionRecommendation", back_populates="decision", uselist=False, cascade="all, delete-orphan")
-    actions = relationship("DecisionAction", back_populates="decision", cascade="all, delete-orphan", order_by="DecisionAction.created_at")
-    policy_snapshot = relationship("DecisionPolicySnapshot", back_populates="decision", uselist=False, cascade="all, delete-orphan")
+    recommendation = relationship(
+        "DecisionRecommendation",
+        back_populates="decision",
+        uselist=False,
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
+    actions = relationship(
+        "DecisionAction",
+        back_populates="decision",
+        cascade="all, delete-orphan",
+        order_by="DecisionAction.created_at",
+        lazy="selectin",
+    )
+    policy_snapshot = relationship(
+        "DecisionPolicySnapshot",
+        back_populates="decision",
+        uselist=False,
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
 
 
 class DecisionRecommendation(Base):
