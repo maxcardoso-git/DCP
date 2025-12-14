@@ -32,8 +32,6 @@ services:
   dcp-frontend:
     build:
       context: frontend
-    environment:
-      VITE_API_BASE: ${VITE_API_BASE:-http://dcp-api:8000/api/v2/dcp}
     depends_on:
       - dcp-api
     ports:

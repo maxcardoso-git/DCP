@@ -3,8 +3,7 @@ WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN npm install
 COPY . .
-ARG VITE_API_BASE=http://dcp-api:8000/api/v2/dcp
-ENV VITE_API_BASE=$VITE_API_BASE
+# Build without hardcoding API base; runtime infers from window location unless VITE_API_BASE is provided at build.
 RUN npm run build
 
 FROM node:20-alpine
