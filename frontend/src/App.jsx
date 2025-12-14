@@ -3,6 +3,16 @@ import "./App.css";
 import { approveDecision, createDecisionGate, escalateDecision, listDecisions, modifyDecision, rejectDecision } from "./api";
 import { getTranslation, supportedLangs } from "./i18n";
 
+const genUuid = () => {
+  if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();
+  // Fallback UUID v4-ish
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+};
+
 const initialGate = {
   flow_id: "sample-flow",
   node_id: "checkpoint-1",
@@ -74,7 +84,7 @@ function App() {
       const payload = {
         ...initialGate,
         language: lang,
-        execution_id: crypto.randomUUID(),
+        execution_id: genUuid(),
       };
       await createDecisionGate(payload);
       await fetchDecisions();
