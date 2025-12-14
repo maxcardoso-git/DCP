@@ -62,7 +62,7 @@ async def create_decision_gate(
                 payload.risk_score, payload.confidence_score, payload.estimated_cost, payload.compliance_flags
             )
             payload.policy_snapshot = schemas.DecisionPolicySnapshotIn(
-                policy_version="heuristic-v1", evaluated_rules=[result], result=result["result"]
+                policy_version="heuristic-v1", evaluated_rules=[{"id": "heuristic", **result}], result=result["result"]
             )
         decision = await crud.create_decision(session, payload)
         await publish_event(

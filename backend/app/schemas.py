@@ -20,7 +20,7 @@ class DecisionRecommendationIn(BaseModel):
 
 class DecisionPolicySnapshotIn(BaseModel):
     policy_version: Optional[str] = None
-    evaluated_rules: Optional[dict[str, Any]] = None
+    evaluated_rules: Optional[list[dict[str, Any]] | dict[str, Any]] = None
     result: Optional[str] = None
 
 
@@ -60,7 +60,7 @@ class DecisionRecommendationOut(BaseModel):
 
 class DecisionPolicySnapshotOut(BaseModel):
     policy_version: Optional[str] = None
-    evaluated_rules: Optional[dict[str, Any]] = None
+    evaluated_rules: Optional[list[dict[str, Any]] | dict[str, Any]] = None
     result: Optional[str] = None
     model_config = ConfigDict(from_attributes=True)
 
