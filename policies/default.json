@@ -1,0 +1,74 @@
+{
+  "version": "2.0.0",
+  "description": "Default DCP policy with standard risk-based rules",
+  "rules": [
+    {
+      "id": "compliance-critical",
+      "description": "Force escalation when compliance flags are present",
+      "when": {
+        "exists": ["{{compliance_flags}}"]
+      },
+      "then": {
+        "result": "force_escalation",
+        "reason": "Compliance flag present"
+      }
+    },
+    {
+      "id": "high-risk",
+      "description": "Force escalation for high risk scores (>= 0.8)",
+      "when": {
+        "gte": ["{{risk_score}}", 0.8]
+      },
+      "then": {
+        "result": "force_escalation",
+        "reason": "High risk score"
+      }
+    },
+    {
+      "id": "critical-impact",
+      "description": "Force escalation for critical impact level",
+      "when": {
+        "eq": ["{{impact_level}}", "critical"]
+      },
+      "then": {
+        "result": "force_escalation",
+        "reason": "Critical impact level"
+      }
+    },
+    {
+      "id": "high-cost",
+      "description": "Require human review for high cost transactions (> 10000)",
+      "when": {
+        "gt": ["{{estimated_cost}}", 10000]
+      },
+      "then": {
+        "result": "require_human",
+        "reason": "High cost transaction"
+      }
+    },
+    {
+      "id": "auto-approve-low-risk",
+      "description": "Auto approve for low risk, high confidence, low cost",
+      "when": {
+        "all": [
+          {"lte": ["{{risk_score}}", 0.2]},
+          {"gte": ["{{confidence_score}}", 0.8]},
+          {
+            "any": [
+              {"missing": ["{{estimated_cost}}"]},
+              {"lte": ["{{estimated_cost}}", 500]}
+            ]
+          }
+        ]
+      },
+      "then": {
+        "result": "auto_approve",
+        "reason": "Low risk with high confidence"
+      }
+    }
+  ],
+  "default": {
+    "result": "require_human",
+    "reason": "Default: requires human review"
+  }
+}

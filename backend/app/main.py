@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from fastapi import Depends, FastAPI, HTTPException, Query, Header
+from fastapi import Depends, FastAPI, HTTPException, Query, Header, Response
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -9,15 +9,36 @@ from .policy import evaluate_policy
 from .events import publish_event
 from .config import get_settings
 from .database import Base, engine, get_session
+from .observability.logging import setup_logging
+from .observability.metrics import (
+    get_metrics,
+    get_metrics_content_type,
+    record_decision_created,
+    record_decision_action,
+)
+from .observability.middleware import RequestTracingMiddleware, MetricsMiddleware
 
 settings = get_settings()
-logging.basicConfig(level=logging.INFO)
 
-app = FastAPI(title="Decision Control Plane API", version="2.0.0", openapi_url=f"{settings.api_prefix}/openapi.json")
+# Setup structured logging
+setup_logging(level=settings.log_level, json_format=settings.environment != "development")
 
+logger = logging.getLogger("dcp.api")
+
+app = FastAPI(
+    title="Decision Control Plane API",
+    version="2.0.0",
+    openapi_url=f"{settings.api_prefix}/openapi.json",
+)
+
+# Add middlewares (order matters - first added is outermost)
+app.add_middleware(MetricsMiddleware)
+app.add_middleware(RequestTracingMiddleware)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[origin.strip() for origin in settings.allowed_origins],
+    allow_origins=[origin.strip() for origin in settings.allowed_origins]
+    if settings.environment == "production"
+    else ["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -32,11 +53,33 @@ async def init_models():
 @app.on_event("startup")
 async def on_startup():
     await init_models()
+    logger.info("DCP API started", extra={"version": "2.0.0", "environment": settings.environment})
 
 
 @app.get("/healthz")
 async def health():
-    return {"status": "ok"}
+    """Health check endpoint."""
+    return {"status": "ok", "version": "2.0.0"}
+
+
+@app.get("/readyz")
+async def readiness(session: AsyncSession = Depends(get_session)):
+    """Readiness check - verifies database connectivity."""
+    try:
+        await session.execute("SELECT 1")
+        return {"status": "ready", "database": "connected"}
+    except Exception as e:
+        logger.error(f"Readiness check failed: {e}")
+        raise HTTPException(status_code=503, detail="Database not ready")
+
+
+@app.get("/metrics")
+async def metrics():
+    """Prometheus metrics endpoint."""
+    return Response(
+        content=get_metrics(),
+        media_type=get_metrics_content_type(),
+    )
 
 
 def auth_guard(authorization: str | None = Header(default=None)):
@@ -64,7 +107,15 @@ async def create_decision_gate(
             payload.policy_snapshot = schemas.DecisionPolicySnapshotIn(
                 policy_version="heuristic-v1", evaluated_rules=[{"id": "heuristic", **result}], result=result["result"]
             )
+
         decision = await crud.create_decision(session, payload)
+
+        # Record metrics
+        record_decision_created(
+            flow_id=decision.flow_id,
+            policy_result=payload.policy_snapshot.result or "unknown",
+        )
+
         await publish_event(
             "dcp.decision.paused",
             {
@@ -78,6 +129,7 @@ async def create_decision_gate(
         )
         return decision
     except Exception as exc:
+        logger.error(f"Error creating decision gate: {exc}")
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
@@ -99,6 +151,7 @@ async def approve_decision(
 ):
     try:
         decision = await crud.approve_decision(session, decision_id, payload)
+        record_decision_action(action_type="approve", actor_type=payload.actor_type)
         await publish_event("dcp.decision.actioned", {"decision_id": str(decision.id), "action": "approve"})
         return decision
     except ValueError:
@@ -111,6 +164,7 @@ async def reject_decision(
 ):
     try:
         decision = await crud.reject_decision(session, decision_id, payload)
+        record_decision_action(action_type="reject", actor_type=payload.actor_type)
         await publish_event("dcp.decision.actioned", {"decision_id": str(decision.id), "action": "reject"})
         return decision
     except ValueError:
@@ -123,6 +177,7 @@ async def escalate_decision(
 ):
     try:
         decision = await crud.escalate_decision(session, decision_id, payload)
+        record_decision_action(action_type="escalate", actor_type=payload.actor_type)
         await publish_event("dcp.decision.actioned", {"decision_id": str(decision.id), "action": "escalate"})
         return decision
     except ValueError:
@@ -135,6 +190,7 @@ async def modify_decision(
 ):
     try:
         decision = await crud.modify_decision(session, decision_id, payload)
+        record_decision_action(action_type="modify", actor_type=payload.actor_type)
         await publish_event("dcp.decision.actioned", {"decision_id": str(decision.id), "action": "modify"})
         return decision
     except ValueError:

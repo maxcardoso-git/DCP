@@ -1,12 +1,17 @@
-import json
-import logging
+"""
+Event publishing module.
 
-logger = logging.getLogger("dcp.events")
+This is a compatibility layer that re-exports from the events package.
+For new code, import directly from app.events package.
+"""
+from .events.publisher import publish_event, get_publisher, EventPublisher
+from .events.schemas import CloudEvent, create_cloud_event, EventTypes
 
-
-async def publish_event(event_type: str, payload: dict):
-    """
-    Stub event publisher: log the event type and payload.
-    Replace with real bus/webhook integration.
-    """
-    logger.info("EVENT %s: %s", event_type, json.dumps(payload))
+__all__ = [
+    "publish_event",
+    "get_publisher",
+    "EventPublisher",
+    "CloudEvent",
+    "create_cloud_event",
+    "EventTypes",
+]
