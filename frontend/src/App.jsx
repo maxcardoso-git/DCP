@@ -5,7 +5,6 @@ import { getTranslation, supportedLangs } from "./i18n";
 
 const genUuid = () => {
   if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();
-  // Fallback UUID v4-ish
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
     const r = (Math.random() * 16) | 0;
     const v = c === "x" ? r : (r & 0x3) | 0x8;
@@ -13,16 +12,20 @@ const genUuid = () => {
   });
 };
 
-const initialGate = {
-  flow_id: "sample-flow",
-  node_id: "checkpoint-1",
-  language: "en",
-  risk_score: 0.42,
-  confidence_score: 0.68,
-  estimated_cost: 12.5,
+// Counter for sample gates
+let sampleGateCounter = 0;
+
+const createSamplePayload = (lang, counter) => ({
+  flow_id: "demo-flow",
+  node_id: `checkpoint-${counter}`,
+  language: lang,
+  execution_id: genUuid(),
+  risk_score: parseFloat((0.1 + Math.random() * 0.3).toFixed(2)),
+  confidence_score: parseFloat((0.5 + Math.random() * 0.1).toFixed(2)),
+  estimated_cost: parseFloat((100 + counter * 0.1).toFixed(1)),
   recommendation: {
-    summary: "Sample recommendation (replace with real payload).",
-    detailed_explanation: { reasoning: ["Example only"] },
+    summary: `Sample gate ${counter}`,
+    detailed_explanation: { reasoning: ["sample", `gate ${counter}`] },
     model_used: "demo-model",
     prompt_version: "v0",
   },
@@ -31,7 +34,7 @@ const initialGate = {
     evaluated_rules: [{ id: "demo", outcome: "require_human" }],
     result: "require_human",
   },
-};
+});
 
 function App() {
   const [decisions, setDecisions] = useState([]);
@@ -46,8 +49,7 @@ function App() {
   const [comment, setComment] = useState("");
 
   const t = (key) => getTranslation(lang, key);
-
-  const statusText = (status) => t(`status.${status}`) || status;
+  const statusText = (status) => t(`status.${status}`) || status.replace(/_/g, " ");
 
   const fetchDecisions = async () => {
     setLoading(true);
@@ -81,11 +83,8 @@ function App() {
     setCreating(true);
     setError("");
     try {
-      const payload = {
-        ...initialGate,
-        language: lang,
-        execution_id: genUuid(),
-      };
+      sampleGateCounter++;
+      const payload = createSamplePayload(lang, sampleGateCounter);
       await createDecisionGate(payload);
       await fetchDecisions();
     } catch (e) {
@@ -109,8 +108,7 @@ function App() {
             <p className="eyebrow">Decision Control Plane · v2</p>
             <h1>{t("decision.inbox")}</h1>
             <p className="muted">
-              API-connected inbox for human-in-the-loop decisions. Use the sample gate to simulate incoming pauses or call the
-              API directly.
+              API-connected inbox for human-in-the-loop decisions. Use the sample gate to simulate incoming pauses or call the API directly.
             </p>
           </div>
         </div>
@@ -123,19 +121,17 @@ function App() {
             ))}
           </select>
           <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-            {["pending_human_review", "approved", "rejected", "modified", "escalated", "expired", "executed"].map(
-              (s) => (
-                <option key={s} value={s}>
-                  {statusText(s)}
-                </option>
-              )
-            )}
+            {["pending_human_review", "approved", "rejected", "modified", "escalated", "expired", "executed"].map((s) => (
+              <option key={s} value={s}>
+                {statusText(s)}
+              </option>
+            ))}
           </select>
           <button onClick={() => { setOffset(0); fetchDecisions(); }} disabled={loading}>
             Refresh
           </button>
           <button onClick={createSampleGate} disabled={creating}>
-            {creating ? "Creating…" : "Create sample gate"}
+            {creating ? "Creating..." : "Create sample gate"}
           </button>
         </div>
       </header>
@@ -143,8 +139,12 @@ function App() {
       {error && <div className="banner error">{error}</div>}
 
       <div className="comment-box">
-        <label>{t("action.comment.placeholder")}</label>
-        <textarea value={comment} onChange={(e) => setComment(e.target.value)} placeholder={t("action.comment.placeholder")} />
+        <label>Add a comment (optional)</label>
+        <textarea
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
+          placeholder="Add a comment (optional)"
+        />
       </div>
 
       <div className="pagination">
@@ -162,11 +162,11 @@ function App() {
       </div>
 
       {loading ? (
-        <div className="muted">Loading decisions…</div>
+        <div className="loading-text">Loading decisions...</div>
       ) : (
         <div className="cards">
           {sorted.length === 0 ? (
-            <div className="muted">No decisions yet.</div>
+            <div className="empty-state">No decisions yet.</div>
           ) : (
             sorted.map((d) => (
               <div key={d.id} className="card">
@@ -179,37 +179,42 @@ function App() {
                   </div>
                   <span className={`badge status-${d.status}`}>{statusText(d.status)}</span>
                 </div>
+
                 <div className="meta">
                   <span>Risk: {d.risk_score ?? "—"}</span>
                   <span>Confidence: {d.confidence_score ?? "—"}</span>
                   <span>Cost: {d.estimated_cost ?? "—"}</span>
                   <span>Lang: {d.language}</span>
                 </div>
+
                 <pre className="explanation">
                   {JSON.stringify(d.recommendation?.detailed_explanation || {}, null, 2)}
                 </pre>
+
                 <div className="actions">
-                  <button onClick={() => handleAction(d.id, approveDecision)}>{t("decision.approve")}</button>
-                  <button onClick={() => handleAction(d.id, rejectDecision)}>{t("decision.reject")}</button>
-                  <button onClick={() => handleAction(d.id, escalateDecision)}>{t("decision.escalate")}</button>
-                  <button
-                    onClick={() =>
-                      handleAction(d.id, modifyDecision, { modifications: { note: "modified", comment } || {} })
-                    }
-                  >
+                  <button onClick={() => handleAction(d.id, approveDecision)}>
+                    {t("decision.approve")}
+                  </button>
+                  <button onClick={() => handleAction(d.id, rejectDecision)}>
+                    {t("decision.reject")}
+                  </button>
+                  <button onClick={() => handleAction(d.id, escalateDecision)}>
+                    {t("decision.escalate")}
+                  </button>
+                  <button onClick={() => handleAction(d.id, modifyDecision, { modifications: { note: "modified", comment } || {} })}>
                     {t("decision.modify")}
                   </button>
                 </div>
+
                 <div className="timeline">
                   {d.actions?.length ? (
                     d.actions.map((a) => (
                       <div key={a.id} className="timeline-item">
                         <span className="badge ghost">{a.action_type}</span>
                         <span className="muted">
-                          {a.actor_type} {a.actor_id ? `· ${a.actor_id}` : ""} ·{" "}
-                          {new Date(a.created_at).toLocaleString()}
+                          {a.actor_type} {a.actor_id ? `· ${a.actor_id}` : ""} · {new Date(a.created_at).toLocaleString()}
                         </span>
-                        {a.comment && <p>{a.comment}</p>}
+                        {a.comment && <p className="action-comment">{a.comment}</p>}
                       </div>
                     ))
                   ) : (
