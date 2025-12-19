@@ -11,9 +11,10 @@
 
 /* Page Layout */
 .page {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0 0 80px;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 24px 24px 80px;
 }
 
 /* Header - Dark Blue */
@@ -21,7 +22,8 @@ header {
   background: linear-gradient(135deg, #0a0f1a 0%, #0d1525 50%, #0a1020 100%);
   color: #e2e8f0;
   padding: 32px;
-  margin-bottom: 32px;
+  margin: -24px -24px 32px -24px;
+  border-radius: 0 0 24px 24px;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -138,7 +140,7 @@ header button:disabled {
 
 /* Error Banner */
 .banner {
-  margin: 0 32px 16px;
+  margin: 0 0 16px;
   padding: 14px 18px;
   border-radius: 12px;
   font-size: 14px;
@@ -152,7 +154,7 @@ header button:disabled {
 
 /* Comment Box */
 .comment-box {
-  margin: 0 32px 24px;
+  margin: 0 0 24px;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -194,7 +196,7 @@ input[type="text"]:focus {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin: 0 32px 24px;
+  margin: 0 0 24px;
   padding: 16px 0;
   border-bottom: 1px solid #e2e8f0;
 }
@@ -235,7 +237,6 @@ input[type="text"]:focus {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 20px;
-  padding: 0 32px;
 }
 
 @media (max-width: 1200px) {
@@ -245,20 +246,17 @@ input[type="text"]:focus {
 }
 
 @media (max-width: 768px) {
+  .page {
+    padding: 16px 16px 64px;
+  }
+
   .cards {
     grid-template-columns: 1fr;
-    padding: 0 16px;
   }
 
   header {
     padding: 24px 16px;
-  }
-
-  .comment-box,
-  .pagination,
-  .banner {
-    margin-left: 16px;
-    margin-right: 16px;
+    margin: -16px -16px 24px -16px;
   }
 }
 
@@ -402,17 +400,47 @@ input[type="text"]:focus {
   padding: 12px 16px;
   font-size: 14px;
   font-weight: 500;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  border: none;
   border-radius: 10px;
-  color: #1e293b;
+  color: #ffffff;
   cursor: pointer;
   transition: all 150ms ease;
 }
 
-.actions button:hover:not(:disabled) {
-  background: #f1f5f9;
-  border-color: #cbd5e1;
+/* Approve - Green */
+.actions button:nth-child(1) {
+  background: #16a34a;
+}
+
+.actions button:nth-child(1):hover:not(:disabled) {
+  background: #15803d;
+}
+
+/* Reject - Red */
+.actions button:nth-child(2) {
+  background: #dc2626;
+}
+
+.actions button:nth-child(2):hover:not(:disabled) {
+  background: #b91c1c;
+}
+
+/* Escalate - Orange */
+.actions button:nth-child(3) {
+  background: #ea580c;
+}
+
+.actions button:nth-child(3):hover:not(:disabled) {
+  background: #c2410c;
+}
+
+/* Modify - Blue */
+.actions button:nth-child(4) {
+  background: #2563eb;
+}
+
+.actions button:nth-child(4):hover:not(:disabled) {
+  background: #1d4ed8;
 }
 
 .actions button:disabled {
