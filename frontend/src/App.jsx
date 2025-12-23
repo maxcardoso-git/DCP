@@ -36,6 +36,204 @@ const createSamplePayload = (lang, counter) => ({
   },
 });
 
+function HowItWorksModal({ isOpen, onClose }) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2>How it Works</h2>
+          <button className="modal-close" onClick={onClose}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="modal-body">
+          <section className="modal-section">
+            <h3>Decision Control Plane (DCP)</h3>
+            <p>
+              O DCP e um sistema de controle de decisoes que permite implementar <strong>human-in-the-loop</strong> em
+              fluxos automatizados. Ele atua como um "gate" que pausa a execucao ate que uma decisao seja tomada
+              por um humano ou pelo sistema de politicas.
+            </p>
+          </section>
+
+          <section className="modal-section">
+            <h3>Conceitos Principais</h3>
+            <div className="concept-grid">
+              <div className="concept-item">
+                <div className="concept-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <strong>Decision Gate</strong>
+                  <p>Ponto de pausa no fluxo onde uma decisao e necessaria</p>
+                </div>
+              </div>
+              <div className="concept-item">
+                <div className="concept-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  </svg>
+                </div>
+                <div>
+                  <strong>Policy Engine</strong>
+                  <p>Motor de regras que avalia automaticamente se uma decisao pode ser auto-aprovada</p>
+                </div>
+              </div>
+              <div className="concept-item">
+                <div className="concept-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                <div>
+                  <strong>Actions</strong>
+                  <p>Approve, Reject, Escalate ou Modify - acoes disponiveis para cada decisao</p>
+                </div>
+              </div>
+              <div className="concept-item">
+                <div className="concept-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                  </svg>
+                </div>
+                <div>
+                  <strong>Events</strong>
+                  <p>Notificacoes em tempo real via Redis Pub/Sub quando decisoes sao criadas ou alteradas</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section className="modal-section">
+            <h3>Integracao com OrchestratorAI</h3>
+            <p>
+              O DCP foi projetado para integrar perfeitamente com o <strong>OrchestratorAI</strong>,
+              permitindo que agentes de IA pausem sua execucao em pontos criticos para revisao humana.
+            </p>
+
+            <div className="integration-flow">
+              <div className="flow-step">
+                <div className="step-number">1</div>
+                <div className="step-content">
+                  <strong>Agente Executa</strong>
+                  <p>O agente do OrchestratorAI processa uma tarefa e identifica um ponto de decisao</p>
+                </div>
+              </div>
+              <div className="flow-arrow">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+              </div>
+              <div className="flow-step">
+                <div className="step-number">2</div>
+                <div className="step-content">
+                  <strong>Cria Decision Gate</strong>
+                  <p>POST /api/v2/dcp/decision-gates com contexto da decisao</p>
+                </div>
+              </div>
+              <div className="flow-arrow">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+              </div>
+              <div className="flow-step">
+                <div className="step-number">3</div>
+                <div className="step-content">
+                  <strong>Humano Decide</strong>
+                  <p>Revisao e acao via esta interface ou API</p>
+                </div>
+              </div>
+              <div className="flow-arrow">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+              </div>
+              <div className="flow-step">
+                <div className="step-number">4</div>
+                <div className="step-content">
+                  <strong>Agente Continua</strong>
+                  <p>Webhook ou polling notifica o agente para continuar</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section className="modal-section">
+            <h3>API Endpoints</h3>
+            <div className="api-list">
+              <div className="api-item">
+                <code className="api-method post">POST</code>
+                <code className="api-path">/api/v2/dcp/decision-gates</code>
+                <span className="api-desc">Criar nova decisao pendente</span>
+              </div>
+              <div className="api-item">
+                <code className="api-method get">GET</code>
+                <code className="api-path">/api/v2/dcp/decisions</code>
+                <span className="api-desc">Listar decisoes</span>
+              </div>
+              <div className="api-item">
+                <code className="api-method post">POST</code>
+                <code className="api-path">/api/v2/dcp/decisions/{"{id}"}/approve</code>
+                <span className="api-desc">Aprovar decisao</span>
+              </div>
+              <div className="api-item">
+                <code className="api-method post">POST</code>
+                <code className="api-path">/api/v2/dcp/decisions/{"{id}"}/reject</code>
+                <span className="api-desc">Rejeitar decisao</span>
+              </div>
+              <div className="api-item">
+                <code className="api-method post">POST</code>
+                <code className="api-path">/api/v2/dcp/decisions/{"{id}"}/escalate</code>
+                <span className="api-desc">Escalar decisao</span>
+              </div>
+              <div className="api-item">
+                <code className="api-method post">POST</code>
+                <code className="api-path">/api/v2/dcp/decisions/{"{id}"}/modify</code>
+                <span className="api-desc">Modificar decisao</span>
+              </div>
+            </div>
+          </section>
+
+          <section className="modal-section">
+            <h3>Exemplo de Integracao</h3>
+            <pre className="code-block">
+{`// OrchestratorAI - Criar Decision Gate
+const response = await fetch('/api/v2/dcp/decision-gates', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    execution_id: "uuid-da-execucao",
+    flow_id: "payment-approval",
+    node_id: "high-value-check",
+    risk_score: 0.75,
+    confidence_score: 0.82,
+    estimated_cost: 5000.00,
+    recommendation: {
+      summary: "Transacao de alto valor requer aprovacao",
+      detailed_explanation: {
+        reasoning: ["Valor acima do limite", "Cliente novo"]
+      }
+    }
+  })
+});
+
+const decision = await response.json();
+// decision.id -> usar para polling ou webhook`}
+            </pre>
+          </section>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   const [decisions, setDecisions] = useState([]);
   const [total, setTotal] = useState(0);
@@ -47,6 +245,7 @@ function App() {
   const [offset, setOffset] = useState(0);
   const [creating, setCreating] = useState(false);
   const [comment, setComment] = useState("");
+  const [showHowItWorks, setShowHowItWorks] = useState(false);
 
   const t = (key) => getTranslation(lang, key);
   const statusText = (status) => t(`status.${status}`) || status.replace(/_/g, " ");
@@ -110,6 +309,14 @@ function App() {
             <p className="muted">
               API-connected inbox for human-in-the-loop decisions. Use the sample gate to simulate incoming pauses or call the API directly.
             </p>
+            <button className="btn-how-it-works" onClick={() => setShowHowItWorks(true)}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3" />
+                <path d="M12 17h.01" />
+              </svg>
+              How it Works
+            </button>
           </div>
         </div>
         <div className="controls">
@@ -135,6 +342,8 @@ function App() {
           </button>
         </div>
       </header>
+
+      <HowItWorksModal isOpen={showHowItWorks} onClose={() => setShowHowItWorks(false)} />
 
       {error && <div className="banner error">{error}</div>}
 
