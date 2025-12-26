@@ -110,3 +110,21 @@ class DecisionPolicySnapshot(Base):
     result = Column(String, nullable=True)
 
     decision = relationship("Decision", back_populates="policy_snapshot")
+
+
+class AppFeature(Base):
+    """TAH App Features for permission management."""
+    __tablename__ = "app_feature"
+
+    id = Column(String(100), primary_key=True)  # format: appId.featureName
+    name = Column(String(255), nullable=False)
+    description = Column(String, nullable=True)
+    module = Column(String(100), nullable=False)
+    path = Column(String(255), nullable=True)
+    icon = Column(String(100), nullable=True)
+    actions = Column(JSON, default=list)  # ["read", "create", "update", "delete", "execute"]
+    is_public = Column(String(10), default="false")  # stored as string for compatibility
+    requires_org = Column(String(10), default="true")
+    metadata = Column(JSON, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)

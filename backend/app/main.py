@@ -9,6 +9,7 @@ from .policy import evaluate_policy
 from .events import publish_event
 from .config import get_settings
 from .database import Base, engine, get_session
+from .app_features import router as app_features_router
 from .observability.logging import setup_logging
 from .observability.metrics import (
     get_metrics,
@@ -54,6 +55,10 @@ async def init_models():
 async def on_startup():
     await init_models()
     logger.info("DCP API started", extra={"version": "2.0.0", "environment": settings.environment})
+
+
+# Mount TAH App Features router
+app.include_router(app_features_router, prefix="/api/v1/app-features")
 
 
 @app.get("/healthz")
