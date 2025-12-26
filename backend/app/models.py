@@ -125,6 +125,6 @@ class AppFeature(Base):
     actions = Column(JSON, default=list)  # ["read", "create", "update", "delete", "execute"]
     is_public = Column(String(10), default="false")  # stored as string for compatibility
     requires_org = Column(String(10), default="true")
-    metadata = Column(JSON, nullable=True)
+    extra_data = Column(JSON, nullable=True)  # renamed from metadata (reserved by SQLAlchemy)
     created_at = Column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)

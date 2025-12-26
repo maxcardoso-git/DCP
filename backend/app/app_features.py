@@ -219,7 +219,7 @@ def feature_to_out(feature: AppFeature) -> AppFeatureOut:
         actions=feature.actions or [],
         isPublic=feature.is_public == "true",
         requiresOrg=feature.requires_org == "true",
-        metadata=feature.metadata,
+        metadata=feature.extra_data,
     )
 
 
@@ -307,7 +307,7 @@ async def create_feature(
         actions=payload.actions,
         is_public="true" if payload.is_public else "false",
         requires_org="true" if payload.requires_org else "false",
-        metadata=payload.metadata,
+        extra_data=payload.metadata,
     )
     session.add(feature)
     await session.commit()
@@ -336,7 +336,7 @@ async def update_feature(
     feature.actions = payload.actions
     feature.is_public = "true" if payload.is_public else "false"
     feature.requires_org = "true" if payload.requires_org else "false"
-    feature.metadata = payload.metadata
+    feature.extra_data = payload.metadata
     feature.updated_at = datetime.utcnow()
 
     await session.commit()
