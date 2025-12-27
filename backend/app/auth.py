@@ -273,18 +273,27 @@ async def tah_callback(
     db.add(user_session)
     await db.commit()
 
-    # 5. Redirect with session cookie
-    response = RedirectResponse("/", status_code=302)
-    response.set_cookie(
-        "session",
-        session_token,
-        httponly=True,
-        secure=settings.environment == "production",
-        samesite="lax",
-        max_age=settings.session_expire_hours * 3600,
-    )
+    # 5. Redirect to frontend with session cookie
+    redirect_url = settings.frontend_url or "/"
+    response = RedirectResponse(redirect_url, status_code=302)
 
-    logger.info(f"TAH login successful: {payload.email} ({org_id})")
+    # Set cookie - domain must be set for cross-port sharing
+    cookie_kwargs = {
+        "key": "session",
+        "value": session_token,
+        "httponly": True,
+        "secure": settings.environment == "production",
+        "samesite": "lax",
+        "max_age": settings.session_expire_hours * 3600,
+    }
+
+    # Only set domain if explicitly configured (for cross-port sharing)
+    if settings.cookie_domain:
+        cookie_kwargs["domain"] = settings.cookie_domain
+
+    response.set_cookie(**cookie_kwargs)
+
+    logger.info(f"TAH login successful: {payload.email} ({org_id}) -> {redirect_url}")
     return response
 
 

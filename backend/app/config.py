@@ -23,6 +23,8 @@ class Settings(BaseModel):
     app_id: str = Field(default="decision_control_plane")
     tah_enabled: bool = Field(default=True)
     session_expire_hours: int = Field(default=24)
+    frontend_url: str = Field(default="http://72.61.52.70:8100")
+    cookie_domain: str | None = Field(default=None)  # Set to domain for cross-port sharing
 
     # Policy Engine
     policy_path: str | None = None
@@ -57,6 +59,8 @@ def get_settings() -> Settings:
         app_id=os.getenv("APP_ID", Settings.model_fields["app_id"].default),
         tah_enabled=os.getenv("TAH_ENABLED", "true").lower() == "true",
         session_expire_hours=int(os.getenv("SESSION_EXPIRE_HOURS", "24")),
+        frontend_url=os.getenv("FRONTEND_URL", Settings.model_fields["frontend_url"].default),
+        cookie_domain=os.getenv("COOKIE_DOMAIN"),
         # Policy Engine
         policy_path=os.getenv("POLICY_PATH"),
         redis_url=os.getenv("REDIS_URL"),
