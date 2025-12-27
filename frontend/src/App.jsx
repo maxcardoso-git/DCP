@@ -1,40 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import "./App.css";
-import { approveDecision, createDecisionGate, escalateDecision, getSession, listDecisions, modifyDecision, rejectDecision } from "./api";
+import { approveDecision, escalateDecision, getSession, listDecisions, modifyDecision, rejectDecision } from "./api";
 import { getTranslation, supportedLangs } from "./i18n";
-
-const genUuid = () => {
-  if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    const v = c === "x" ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
-};
-
-// Counter for sample gates
-let sampleGateCounter = 0;
-
-const createSamplePayload = (lang, counter) => ({
-  flow_id: "demo-flow",
-  node_id: `checkpoint-${counter}`,
-  language: lang,
-  execution_id: genUuid(),
-  risk_score: parseFloat((0.1 + Math.random() * 0.3).toFixed(2)),
-  confidence_score: parseFloat((0.5 + Math.random() * 0.1).toFixed(2)),
-  estimated_cost: parseFloat((100 + counter * 0.1).toFixed(1)),
-  recommendation: {
-    summary: `Sample gate ${counter}`,
-    detailed_explanation: { reasoning: ["sample", `gate ${counter}`] },
-    model_used: "demo-model",
-    prompt_version: "v0",
-  },
-  policy_snapshot: {
-    policy_version: "v2.0.0",
-    evaluated_rules: [{ id: "demo", outcome: "require_human" }],
-    result: "require_human",
-  },
-});
 
 function HowItWorksModal({ isOpen, onClose }) {
   if (!isOpen) return null;
@@ -243,7 +210,6 @@ function DecisionInbox() {
   const [statusFilter, setStatusFilter] = useState("pending_human_review");
   const [limit] = useState(20);
   const [offset, setOffset] = useState(0);
-  const [creating, setCreating] = useState(false);
   const [comment, setComment] = useState("");
   const [showHowItWorks, setShowHowItWorks] = useState(false);
   const [session, setSession] = useState(null);
@@ -290,21 +256,6 @@ function DecisionInbox() {
       fetchDecisions();
     } catch (e) {
       setError(e.message);
-    }
-  };
-
-  const createSampleGate = async () => {
-    setCreating(true);
-    setError("");
-    try {
-      sampleGateCounter++;
-      const payload = createSamplePayload(lang, sampleGateCounter);
-      await createDecisionGate(payload);
-      await fetchDecisions();
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setCreating(false);
     }
   };
 
@@ -367,9 +318,6 @@ function DecisionInbox() {
           </select>
           <button onClick={() => { setOffset(0); fetchDecisions(); }} disabled={loading}>
             Refresh
-          </button>
-          <button onClick={createSampleGate} disabled={creating}>
-            {creating ? "Creating..." : "Create sample gate"}
           </button>
         </div>
       </header>
