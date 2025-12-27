@@ -14,7 +14,7 @@ from functools import wraps
 from typing import List, Optional
 
 import jwt
-from fastapi import APIRouter, Cookie, Depends, Header, HTTPException, Query, Request
+from fastapi import APIRouter, Cookie, Depends, Header, HTTPException, Query, Request, Response
 from fastapi.responses import RedirectResponse
 from jwt import PyJWKClient
 from pydantic import BaseModel
@@ -438,7 +438,7 @@ async def logout(
     user_session.revoked_at = datetime.utcnow()
     await db.commit()
 
-    response = RedirectResponse("/", status_code=302)
+    response = Response(content='{"success": true}', media_type="application/json")
     response.delete_cookie("session")
 
     return response
