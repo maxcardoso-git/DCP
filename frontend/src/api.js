@@ -1,5 +1,6 @@
 /**
  * API client for DCP backend.
+ * Uses TAH token authentication via Authorization header.
  */
 
 const inferredBase = (() => {
@@ -9,6 +10,25 @@ const inferredBase = (() => {
 })();
 
 const API_BASE = inferredBase;
+
+/**
+ * Token storage utilities.
+ */
+export const authStorage = {
+  getToken: () => localStorage.getItem("access_token"),
+  setToken: (token) => {
+    if (token) {
+      localStorage.setItem("access_token", token);
+      localStorage.setItem("auth_source", "tah");
+    }
+  },
+  clearToken: () => {
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("auth_source");
+  },
+  getAuthSource: () => localStorage.getItem("auth_source"),
+  isAuthenticated: () => !!localStorage.getItem("access_token"),
+};
 
 /**
  * Custom error class for API errors.
@@ -66,13 +86,22 @@ async function request(path, options = {}) {
 
   const timeoutId = setTimeout(() => controller.abort(), timeout);
 
+  // Build headers with Authorization if token exists
+  const headers = {
+    "Content-Type": "application/json",
+    ...(options.headers || {}),
+  };
+
+  // Add Authorization header if we have a token
+  const token = authStorage.getToken();
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
   try {
     const res = await fetch(`${API_BASE}${path}`, {
-      headers: {
-        "Content-Type": "application/json",
-        ...(options.headers || {}),
-      },
-      credentials: "include", // Send cookies for cross-origin requests
+      headers,
+      credentials: "include", // Keep for backwards compatibility
       signal: controller.signal,
       ...options,
     });
@@ -90,6 +119,12 @@ async function request(path, options = {}) {
           body = null;
         }
       }
+
+      // If 401, clear stored token
+      if (res.status === 401) {
+        authStorage.clearToken();
+      }
+
       throw new ApiError(res.status, res.statusText, body);
     }
 
@@ -114,6 +149,20 @@ async function request(path, options = {}) {
     // Network error
     throw new ApiError(0, "Network Error", { detail: err.message });
   }
+}
+
+/**
+ * Get current session info.
+ */
+export async function getSession() {
+  return request(`/auth/session`);
+}
+
+/**
+ * Check authentication status.
+ */
+export async function checkAuth() {
+  return request(`/auth/check`);
 }
 
 /**
@@ -197,6 +246,9 @@ export async function healthCheck() {
 }
 
 export default {
+  authStorage,
+  getSession,
+  checkAuth,
   listDecisions,
   createDecisionGate,
   approveDecision,

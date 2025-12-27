@@ -14,7 +14,7 @@ from functools import wraps
 from typing import List, Optional
 
 import jwt
-from fastapi import APIRouter, Cookie, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Cookie, Depends, Header, HTTPException, Query, Request
 from fastapi.responses import RedirectResponse
 from jwt import PyJWKClient
 from pydantic import BaseModel
@@ -24,6 +24,18 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from .config import get_settings
 from .database import get_session
 from .models import User, UserSession
+
+
+@dataclass
+class TAHUserInfo:
+    """User info extracted from TAH token."""
+    user_id: str
+    email: str
+    name: Optional[str]
+    org_id: str
+    roles: List[str]
+    permissions: List[str]
+    tenant_id: Optional[str]
 
 logger = logging.getLogger("dcp.auth")
 settings = get_settings()
@@ -176,6 +188,101 @@ def get_org_id() -> str:
     return org_id
 
 
+async def get_current_user_from_bearer(
+    authorization: Optional[str] = Header(default=None),
+    db: AsyncSession = Depends(get_session),
+) -> Optional[TAHUserInfo]:
+    """
+    Validate TAH JWT token from Authorization header.
+
+    This is the OrchestratorAI-style auth where the frontend stores the TAH token
+    in localStorage and sends it via Authorization: Bearer <token> header.
+    """
+    if not authorization:
+        return None
+
+    if not authorization.startswith("Bearer "):
+        return None
+
+    token = authorization[7:]  # Remove "Bearer " prefix
+
+    try:
+        validator = TAHTokenValidator.get_instance()
+        payload = validator.validate(token)
+
+        # Set context variables for org filtering
+        current_org_id.set(payload.org_id)
+        current_user_id.set(payload.sub)
+
+        return TAHUserInfo(
+            user_id=payload.sub,
+            email=payload.email,
+            name=payload.name,
+            org_id=payload.org_id,
+            roles=payload.roles,
+            permissions=payload.permissions,
+            tenant_id=payload.tenant_id,
+        )
+    except ValueError as e:
+        logger.warning(f"Bearer token validation failed: {e}")
+        return None
+
+
+async def get_auth_user(
+    request: Request,
+    authorization: Optional[str] = Header(default=None),
+    session_token: Optional[str] = Cookie(default=None, alias="session"),
+    db: AsyncSession = Depends(get_session),
+) -> TAHUserInfo:
+    """
+    Get authenticated user from either Bearer token or session cookie.
+
+    Tries Bearer token first (OrchestratorAI-style), then falls back to session cookie.
+    """
+    # Try Bearer token first
+    if authorization and authorization.startswith("Bearer "):
+        user_info = await get_current_user_from_bearer(authorization, db)
+        if user_info:
+            return user_info
+
+    # Fall back to session cookie
+    if session_token:
+        try:
+            user_session = await get_current_session(request, session_token, db)
+            # Get user details from session
+            result = await db.execute(
+                select(User).where(User.id == user_session.user_id)
+            )
+            user = result.scalar_one_or_none()
+            if user:
+                return TAHUserInfo(
+                    user_id=str(user.id),
+                    email=user.email,
+                    name=user.name,
+                    org_id=user_session.org_id,
+                    roles=user_session.tah_roles or [],
+                    permissions=user_session.tah_permissions or [],
+                    tenant_id=user_session.tenant_id,
+                )
+        except HTTPException:
+            pass
+
+    raise HTTPException(status_code=401, detail="Not authenticated")
+
+
+async def get_optional_auth_user(
+    request: Request,
+    authorization: Optional[str] = Header(default=None),
+    session_token: Optional[str] = Cookie(default=None, alias="session"),
+    db: AsyncSession = Depends(get_session),
+) -> Optional[TAHUserInfo]:
+    """Get authenticated user if available, None otherwise."""
+    try:
+        return await get_auth_user(request, authorization, session_token, db)
+    except HTTPException:
+        return None
+
+
 def has_permission(session: UserSession, required: str) -> bool:
     """Check if user has a specific permission."""
     permissions = session.tah_permissions or []
@@ -299,26 +406,17 @@ async def tah_callback(
 
 @router.get("/auth/session", response_model=SessionInfo)
 async def get_session_info(
-    user_session: UserSession = Depends(get_current_session),
-    db: AsyncSession = Depends(get_session),
+    user: TAHUserInfo = Depends(get_auth_user),
 ):
-    """Get current session information."""
-    result = await db.execute(
-        select(User).where(User.id == user_session.user_id)
-    )
-    user = result.scalar_one_or_none()
-
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
+    """Get current session information from Bearer token or session cookie."""
     return SessionInfo(
-        user_id=str(user.id),
-        org_id=user_session.org_id,
+        user_id=user.user_id,
+        org_id=user.org_id,
         email=user.email,
         name=user.name,
-        roles=user_session.tah_roles or [],
-        permissions=user_session.tah_permissions or [],
-        tenant_id=user_session.tenant_id,
+        roles=user.roles,
+        permissions=user.permissions,
+        tenant_id=user.tenant_id,
     )
 
 
@@ -339,9 +437,9 @@ async def logout(
 
 @router.get("/auth/check")
 async def check_auth(
-    user_session: Optional[UserSession] = Depends(get_optional_session),
+    user: Optional[TAHUserInfo] = Depends(get_optional_auth_user),
 ):
     """Check if user is authenticated (public endpoint)."""
-    if user_session:
-        return {"authenticated": True, "org_id": user_session.org_id}
+    if user:
+        return {"authenticated": True, "org_id": user.org_id}
     return {"authenticated": False}
