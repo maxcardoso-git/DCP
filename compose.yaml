@@ -18,7 +18,7 @@ services:
   redis:
     image: redis:7-alpine
     ports:
-      - "${HOST_REDIS_PORT:-6379}:6379"
+      - "${HOST_REDIS_PORT:-16379}:6379"
     volumes:
       - dcp-redis-data:/data
     healthcheck:
@@ -39,6 +39,13 @@ services:
       API_PREFIX: /api/v2/dcp
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       ENVIRONMENT: ${ENVIRONMENT:-development}
+      # TAH Integration
+      TAH_BASE_URL: ${TAH_BASE_URL:-http://72.61.52.70:3050}
+      TAH_JWKS_URL: ${TAH_JWKS_URL:-http://72.61.52.70:3050/.well-known/jwks.json}
+      TAH_ISSUER: ${TAH_ISSUER:-http://72.61.52.70:3050}
+      APP_ID: ${APP_ID:-dcp}
+      TAH_ENABLED: ${TAH_ENABLED:-true}
+      SESSION_EXPIRE_HOURS: ${SESSION_EXPIRE_HOURS:-24}
     depends_on:
       db:
         condition: service_healthy
