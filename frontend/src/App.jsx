@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import "./App.css";
-import { approveDecision, createDecisionGate, escalateDecision, listDecisions, modifyDecision, rejectDecision } from "./api";
+import { approveDecision, createDecisionGate, escalateDecision, getSession, listDecisions, modifyDecision, rejectDecision } from "./api";
 import { getTranslation, supportedLangs } from "./i18n";
 
 const genUuid = () => {
@@ -246,9 +246,20 @@ function DecisionInbox() {
   const [creating, setCreating] = useState(false);
   const [comment, setComment] = useState("");
   const [showHowItWorks, setShowHowItWorks] = useState(false);
+  const [session, setSession] = useState(null);
 
   const t = (key) => getTranslation(lang, key);
   const statusText = (status) => t(`status.${status}`) || status.replace(/_/g, " ");
+
+  const fetchSession = async () => {
+    try {
+      const data = await getSession();
+      setSession(data);
+    } catch (e) {
+      console.log("Not authenticated:", e.message);
+      setSession(null);
+    }
+  };
 
   const fetchDecisions = async () => {
     setLoading(true);
@@ -263,6 +274,10 @@ function DecisionInbox() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchSession();
+  }, []);
 
   useEffect(() => {
     fetchDecisions();
@@ -320,6 +335,22 @@ function DecisionInbox() {
           </div>
         </div>
         <div className="controls">
+          {session && (
+            <div className="session-info">
+              <span className="session-org" title="Organization">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M3 21h18M9 8h1M9 12h1M9 16h1M14 8h1M14 12h1M14 16h1M5 21V5a2 2 0 012-2h10a2 2 0 012 2v16" />
+                </svg>
+                {session.org_id}
+              </span>
+              <span className="session-user" title={session.email}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z" />
+                </svg>
+                {session.name || session.email}
+              </span>
+            </div>
+          )}
           <select value={lang} onChange={(e) => setLang(e.target.value)}>
             {supportedLangs.map((l) => (
               <option key={l.code} value={l.code}>
