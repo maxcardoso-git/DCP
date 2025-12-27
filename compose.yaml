@@ -47,7 +47,7 @@ services:
       TAH_ENABLED: ${TAH_ENABLED:-true}
       SESSION_EXPIRE_HOURS: ${SESSION_EXPIRE_HOURS:-24}
       FRONTEND_URL: ${FRONTEND_URL:-http://72.61.52.70:8100}
-      COOKIE_DOMAIN: ${COOKIE_DOMAIN:-72.61.52.70}
+      # COOKIE_DOMAIN not set - cookies work across ports by default for same IP
     depends_on:
       db:
         condition: service_healthy
