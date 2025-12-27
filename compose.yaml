@@ -43,7 +43,7 @@ services:
       TAH_BASE_URL: ${TAH_BASE_URL:-http://72.61.52.70:3050}
       TAH_JWKS_URL: ${TAH_JWKS_URL:-http://72.61.52.70:3050/.well-known/jwks.json}
       TAH_ISSUER: ${TAH_ISSUER:-http://72.61.52.70:3050}
-      APP_ID: ${APP_ID:-dcp}
+      APP_ID: ${APP_ID:-decision_control_plane}
       TAH_ENABLED: ${TAH_ENABLED:-true}
       SESSION_EXPIRE_HOURS: ${SESSION_EXPIRE_HOURS:-24}
     depends_on:

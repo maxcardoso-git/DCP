@@ -20,7 +20,7 @@ class Settings(BaseModel):
     tah_base_url: str = Field(default="http://72.61.52.70:3050")
     tah_jwks_url: str = Field(default="http://72.61.52.70:3050/.well-known/jwks.json")
     tah_issuer: str = Field(default="http://72.61.52.70:3050")
-    app_id: str = Field(default="dcp")
+    app_id: str = Field(default="decision_control_plane")
     tah_enabled: bool = Field(default=True)
     session_expire_hours: int = Field(default=24)
 
