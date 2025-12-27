@@ -13,8 +13,16 @@ class Settings(BaseModel):
     allowed_origins: list[str] = Field(default_factory=lambda: ["*"])
     api_prefix: str = "/api/v2/dcp"
 
-    # Authentication
+    # Authentication (legacy bearer token)
     bearer_token: str | None = None
+
+    # TAH Integration
+    tah_base_url: str = Field(default="http://72.61.52.70:3050")
+    tah_jwks_url: str = Field(default="http://72.61.52.70:3050/.well-known/jwks.json")
+    tah_issuer: str = Field(default="http://72.61.52.70:3050")
+    app_id: str = Field(default="dcp")
+    tah_enabled: bool = Field(default=True)
+    session_expire_hours: int = Field(default=24)
 
     # Policy Engine
     policy_path: str | None = None
@@ -42,6 +50,14 @@ def get_settings() -> Settings:
         allowed_origins=os.getenv("ALLOWED_ORIGINS", "*").split(","),
         api_prefix=os.getenv("API_PREFIX", Settings.model_fields["api_prefix"].default),
         bearer_token=os.getenv("BEARER_TOKEN"),
+        # TAH Integration
+        tah_base_url=os.getenv("TAH_BASE_URL", Settings.model_fields["tah_base_url"].default),
+        tah_jwks_url=os.getenv("TAH_JWKS_URL", Settings.model_fields["tah_jwks_url"].default),
+        tah_issuer=os.getenv("TAH_ISSUER", Settings.model_fields["tah_issuer"].default),
+        app_id=os.getenv("APP_ID", Settings.model_fields["app_id"].default),
+        tah_enabled=os.getenv("TAH_ENABLED", "true").lower() == "true",
+        session_expire_hours=int(os.getenv("SESSION_EXPIRE_HOURS", "24")),
+        # Policy Engine
         policy_path=os.getenv("POLICY_PATH"),
         redis_url=os.getenv("REDIS_URL"),
         worker_interval=int(os.getenv("WORKER_INTERVAL", "60")),

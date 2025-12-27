@@ -127,6 +127,7 @@ class DecisionActionOut(BaseModel):
 
 class DecisionOut(BaseModel):
     id: UUID
+    org_id: str = "default"
     execution_id: UUID
     flow_id: str
     node_id: str

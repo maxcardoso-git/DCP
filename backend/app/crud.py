@@ -8,10 +8,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from . import models, schemas
 
 
-async def create_decision(session: AsyncSession, payload: schemas.DecisionCreate) -> models.Decision:
-    # Idempotent on (execution_id, node_id)
+async def create_decision(
+    session: AsyncSession,
+    payload: schemas.DecisionCreate,
+    org_id: str = "default",
+) -> models.Decision:
+    # Idempotent on (execution_id, node_id) within the same org
     existing = await session.execute(
         select(models.Decision).where(
+            models.Decision.org_id == org_id,
             models.Decision.execution_id == payload.execution_id,
             models.Decision.node_id == payload.node_id,
         )
@@ -21,6 +26,7 @@ async def create_decision(session: AsyncSession, payload: schemas.DecisionCreate
         return decision
 
     decision = models.Decision(
+        org_id=org_id,
         execution_id=payload.execution_id,
         flow_id=payload.flow_id,
         node_id=payload.node_id,
@@ -60,11 +66,12 @@ async def create_decision(session: AsyncSession, payload: schemas.DecisionCreate
 
 async def list_decisions(
     session: AsyncSession,
+    org_id: str = "default",
     status: Optional[str] = None,
     limit: int = 50,
     offset: int = 0,
 ) -> tuple[list[models.Decision], int]:
-    stmt = select(models.Decision)
+    stmt = select(models.Decision).where(models.Decision.org_id == org_id)
     if status:
         stmt = stmt.where(models.Decision.status == status)
     stmt = stmt.order_by(models.Decision.created_at.desc())
@@ -77,12 +84,18 @@ async def list_decisions(
 async def _add_action_and_update_status(
     session: AsyncSession,
     decision_id: UUID,
+    org_id: str,
     status: str,
     action_type: str,
     action: schemas.DecisionActionIn,
     payload: Optional[dict] = None,
 ) -> models.Decision:
-    result = await session.execute(select(models.Decision).where(models.Decision.id == decision_id))
+    result = await session.execute(
+        select(models.Decision).where(
+            models.Decision.id == decision_id,
+            models.Decision.org_id == org_id,
+        )
+    )
     decision = result.scalar_one_or_none()
     if not decision:
         raise ValueError("Decision not found")
@@ -102,22 +115,31 @@ async def _add_action_and_update_status(
     return decision
 
 
-async def approve_decision(session: AsyncSession, decision_id: UUID, action: schemas.DecisionActionIn):
-    return await _add_action_and_update_status(session, decision_id, "approved", "approve", action)
+async def approve_decision(
+    session: AsyncSession, decision_id: UUID, action: schemas.DecisionActionIn, org_id: str = "default"
+):
+    return await _add_action_and_update_status(session, decision_id, org_id, "approved", "approve", action)
 
 
-async def reject_decision(session: AsyncSession, decision_id: UUID, action: schemas.DecisionActionIn):
-    return await _add_action_and_update_status(session, decision_id, "rejected", "reject", action)
+async def reject_decision(
+    session: AsyncSession, decision_id: UUID, action: schemas.DecisionActionIn, org_id: str = "default"
+):
+    return await _add_action_and_update_status(session, decision_id, org_id, "rejected", "reject", action)
 
 
-async def escalate_decision(session: AsyncSession, decision_id: UUID, action: schemas.DecisionActionIn):
-    return await _add_action_and_update_status(session, decision_id, "escalated", "escalate", action)
+async def escalate_decision(
+    session: AsyncSession, decision_id: UUID, action: schemas.DecisionActionIn, org_id: str = "default"
+):
+    return await _add_action_and_update_status(session, decision_id, org_id, "escalated", "escalate", action)
 
 
-async def modify_decision(session: AsyncSession, decision_id: UUID, payload: schemas.DecisionModifyIn):
+async def modify_decision(
+    session: AsyncSession, decision_id: UUID, payload: schemas.DecisionModifyIn, org_id: str = "default"
+):
     return await _add_action_and_update_status(
         session,
         decision_id,
+        org_id,
         "modified",
         "modify",
         payload,
