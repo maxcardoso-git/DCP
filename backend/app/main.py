@@ -45,11 +45,29 @@ app = FastAPI(
 # Add middlewares (order matters - first added is outermost)
 app.add_middleware(MetricsMiddleware)
 app.add_middleware(RequestTracingMiddleware)
+
+# CORS: When allow_credentials=True, cannot use "*" for origins
+# Build explicit origins list from frontend_url and allowed_origins
+cors_origins = []
+if settings.frontend_url:
+    cors_origins.append(settings.frontend_url)
+for origin in settings.allowed_origins:
+    origin = origin.strip()
+    if origin and origin != "*":
+        cors_origins.append(origin)
+
+# In development without explicit origins, allow the common local URLs
+if not cors_origins or (len(cors_origins) == 0):
+    cors_origins = [
+        "http://localhost:8100",
+        "http://localhost:4173",
+        "http://127.0.0.1:8100",
+        "http://127.0.0.1:4173",
+    ]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[origin.strip() for origin in settings.allowed_origins]
-    if settings.environment == "production"
-    else ["*"],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

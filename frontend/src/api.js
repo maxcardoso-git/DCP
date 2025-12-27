@@ -72,6 +72,7 @@ async function request(path, options = {}) {
         "Content-Type": "application/json",
         ...(options.headers || {}),
       },
+      credentials: "include", // Send cookies for cross-origin requests
       signal: controller.signal,
       ...options,
     });
