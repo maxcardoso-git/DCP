@@ -151,17 +151,22 @@ export async function checkAuth() {
 
 /**
  * Logout and clear session.
+ * Redirects to TAH logout for complete SSO logout.
  */
 export async function logout() {
-  const res = await fetch(`${AUTH_BASE}/auth/logout`, {
-    method: "POST",
-    credentials: "include",
-  });
-  if (!res.ok) {
-    throw new ApiError(res.status, res.statusText, null);
+  try {
+    await fetch(`${AUTH_BASE}/auth/logout`, {
+      method: "POST",
+      credentials: "include",
+    });
+  } catch (e) {
+    console.error("Logout error:", e);
   }
-  // Redirect to home after logout
-  window.location.href = "/";
+
+  // Redirect to TAH logout for complete SSO logout
+  // TAH will handle clearing the SSO session
+  const tahBaseUrl = import.meta.env.VITE_TAH_BASE_URL || "http://72.61.52.70:3050";
+  window.location.href = `${tahBaseUrl}/logout`;
 }
 
 /**

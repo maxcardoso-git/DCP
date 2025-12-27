@@ -235,7 +235,13 @@ function DecisionInbox() {
       setDecisions(data.items || []);
       setTotal(data.total || 0);
     } catch (e) {
-      setError(e.message);
+      // Don't show error for 401 - user just needs to login
+      if (e.status === 401) {
+        setDecisions([]);
+        setTotal(0);
+      } else {
+        setError(e.message);
+      }
     } finally {
       setLoading(false);
     }
