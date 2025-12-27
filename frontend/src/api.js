@@ -11,6 +11,9 @@ const inferredBase = (() => {
 
 const API_BASE = inferredBase;
 
+// Auth endpoints are mounted at root level (not under /api/v2/dcp)
+const AUTH_BASE = API_BASE.replace("/api/v2/dcp", "");
+
 /**
  * Custom error class for API errors.
  */
@@ -124,14 +127,41 @@ async function request(path, options = {}) {
  * Get current session info.
  */
 export async function getSession() {
-  return request(`/auth/session`);
+  const res = await fetch(`${AUTH_BASE}/auth/session`, {
+    credentials: "include",
+  });
+  if (!res.ok) {
+    throw new ApiError(res.status, res.statusText, null);
+  }
+  return res.json();
 }
 
 /**
  * Check authentication status.
  */
 export async function checkAuth() {
-  return request(`/auth/check`);
+  const res = await fetch(`${AUTH_BASE}/auth/check`, {
+    credentials: "include",
+  });
+  if (!res.ok) {
+    throw new ApiError(res.status, res.statusText, null);
+  }
+  return res.json();
+}
+
+/**
+ * Logout and clear session.
+ */
+export async function logout() {
+  const res = await fetch(`${AUTH_BASE}/auth/logout`, {
+    method: "POST",
+    credentials: "include",
+  });
+  if (!res.ok) {
+    throw new ApiError(res.status, res.statusText, null);
+  }
+  // Redirect to home after logout
+  window.location.href = "/";
 }
 
 /**
@@ -217,6 +247,7 @@ export async function healthCheck() {
 export default {
   getSession,
   checkAuth,
+  logout,
   listDecisions,
   createDecisionGate,
   approveDecision,

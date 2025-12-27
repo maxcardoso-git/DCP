@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import "./App.css";
-import { approveDecision, escalateDecision, getSession, listDecisions, modifyDecision, rejectDecision } from "./api";
+import { approveDecision, escalateDecision, getSession, listDecisions, logout, modifyDecision, rejectDecision } from "./api";
 import { getTranslation, supportedLangs } from "./i18n";
 
 function HowItWorksModal({ isOpen, onClose }) {
@@ -300,6 +300,11 @@ function DecisionInbox() {
                 </svg>
                 {session.name || session.email}
               </span>
+              <button className="btn-logout" onClick={logout} title="Logout">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" />
+                </svg>
+              </button>
             </div>
           )}
           <select value={lang} onChange={(e) => setLang(e.target.value)}>
