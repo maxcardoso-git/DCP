@@ -1,6 +1,6 @@
 /**
  * API client for DCP backend.
- * Uses TAH token authentication via Authorization header.
+ * Uses cookie-based session authentication (TAH SSO).
  */
 
 const inferredBase = (() => {
@@ -10,25 +10,6 @@ const inferredBase = (() => {
 })();
 
 const API_BASE = inferredBase;
-
-/**
- * Token storage utilities.
- */
-export const authStorage = {
-  getToken: () => localStorage.getItem("access_token"),
-  setToken: (token) => {
-    if (token) {
-      localStorage.setItem("access_token", token);
-      localStorage.setItem("auth_source", "tah");
-    }
-  },
-  clearToken: () => {
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("auth_source");
-  },
-  getAuthSource: () => localStorage.getItem("auth_source"),
-  isAuthenticated: () => !!localStorage.getItem("access_token"),
-};
 
 /**
  * Custom error class for API errors.
@@ -86,22 +67,15 @@ async function request(path, options = {}) {
 
   const timeoutId = setTimeout(() => controller.abort(), timeout);
 
-  // Build headers with Authorization if token exists
   const headers = {
     "Content-Type": "application/json",
     ...(options.headers || {}),
   };
 
-  // Add Authorization header if we have a token
-  const token = authStorage.getToken();
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-
   try {
     const res = await fetch(`${API_BASE}${path}`, {
       headers,
-      credentials: "include", // Keep for backwards compatibility
+      credentials: "include", // Send cookies for session auth
       signal: controller.signal,
       ...options,
     });
@@ -118,11 +92,6 @@ async function request(path, options = {}) {
         } catch {
           body = null;
         }
-      }
-
-      // If 401, clear stored token
-      if (res.status === 401) {
-        authStorage.clearToken();
       }
 
       throw new ApiError(res.status, res.statusText, body);
@@ -246,7 +215,6 @@ export async function healthCheck() {
 }
 
 export default {
-  authStorage,
   getSession,
   checkAuth,
   listDecisions,

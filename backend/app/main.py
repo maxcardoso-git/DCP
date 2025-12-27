@@ -15,11 +15,9 @@ from .auth import (
     router as auth_router,
     get_current_session,
     get_optional_session,
-    get_optional_auth_user,
     get_org_id,
     has_permission,
     current_org_id,
-    TAHUserInfo,
 )
 from .models import UserSession
 from .observability.logging import setup_logging
@@ -119,20 +117,20 @@ async def metrics():
 
 
 async def auth_guard(
-    user: Optional[TAHUserInfo] = Depends(get_optional_auth_user),
     authorization: str | None = Header(default=None),
-) -> Optional[TAHUserInfo]:
+    user_session: Optional[UserSession] = Depends(get_optional_session),
+) -> Optional[UserSession]:
     """
-    Hybrid auth guard supporting:
-    - TAH JWT token via Authorization header (OrchestratorAI-style)
-    - TAH session authentication (cookie-based, legacy)
+    Auth guard supporting:
+    - TAH session authentication (cookie-based)
     - Legacy static bearer token authentication
 
-    Returns TAHUserInfo if authenticated.
+    Returns UserSession if TAH authenticated, None for bearer token auth.
     """
-    # 1. Check TAH auth (Bearer JWT or session cookie) - handled by get_optional_auth_user
-    if user:
-        return user
+    # 1. Check TAH session (cookie-based)
+    if user_session:
+        current_org_id.set(user_session.org_id)
+        return user_session
 
     # 2. Fall back to legacy static bearer token
     if settings.bearer_token:
@@ -157,7 +155,7 @@ async def auth_guard(
 async def create_decision_gate(
     payload: schemas.DecisionCreate,
     session: AsyncSession = Depends(get_session),
-    _: Optional[TAHUserInfo] = Depends(auth_guard),
+    _: Optional[UserSession] = Depends(auth_guard),
 ):
     try:
         # Get org_id from context (set by auth_guard)
@@ -204,7 +202,7 @@ async def list_decisions(
     limit: int = Query(default=50, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
     session: AsyncSession = Depends(get_session),
-    _: Optional[TAHUserInfo] = Depends(auth_guard),
+    _: Optional[UserSession] = Depends(auth_guard),
 ):
     org_id = current_org_id.get() or "default"
     items, total = await crud.list_decisions(
@@ -218,7 +216,7 @@ async def approve_decision(
     decision_id: str,
     payload: schemas.DecisionActionIn,
     session: AsyncSession = Depends(get_session),
-    _: Optional[TAHUserInfo] = Depends(auth_guard),
+    _: Optional[UserSession] = Depends(auth_guard),
 ):
     try:
         org_id = current_org_id.get() or "default"
@@ -235,7 +233,7 @@ async def reject_decision(
     decision_id: str,
     payload: schemas.DecisionActionIn,
     session: AsyncSession = Depends(get_session),
-    _: Optional[TAHUserInfo] = Depends(auth_guard),
+    _: Optional[UserSession] = Depends(auth_guard),
 ):
     try:
         org_id = current_org_id.get() or "default"
@@ -252,7 +250,7 @@ async def escalate_decision(
     decision_id: str,
     payload: schemas.DecisionActionIn,
     session: AsyncSession = Depends(get_session),
-    _: Optional[TAHUserInfo] = Depends(auth_guard),
+    _: Optional[UserSession] = Depends(auth_guard),
 ):
     try:
         org_id = current_org_id.get() or "default"
@@ -269,7 +267,7 @@ async def modify_decision(
     decision_id: str,
     payload: schemas.DecisionModifyIn,
     session: AsyncSession = Depends(get_session),
-    _: Optional[TAHUserInfo] = Depends(auth_guard),
+    _: Optional[UserSession] = Depends(auth_guard),
 ):
     try:
         org_id = current_org_id.get() or "default"
@@ -284,7 +282,7 @@ async def modify_decision(
 @app.post(f"{settings.api_prefix}/policy/evaluate")
 async def policy_evaluate(
     payload: schemas.DecisionCreate,
-    _: Optional[TAHUserInfo] = Depends(auth_guard),
+    _: Optional[UserSession] = Depends(auth_guard),
 ):
     result = evaluate_policy(
         payload.risk_score, payload.confidence_score, payload.estimated_cost, payload.compliance_flags

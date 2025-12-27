@@ -1,104 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import "./App.css";
-import { approveDecision, authStorage, createDecisionGate, escalateDecision, getSession, listDecisions, modifyDecision, rejectDecision } from "./api";
+import { approveDecision, createDecisionGate, escalateDecision, listDecisions, modifyDecision, rejectDecision } from "./api";
 import { getTranslation, supportedLangs } from "./i18n";
-
-/**
- * TAH Callback Handler Component
- * Handles the redirect from TAH after SSO authentication.
- */
-function TahCallback() {
-  const [status, setStatus] = useState("processing"); // processing, success, error
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    const processCallback = async () => {
-      try {
-        // Get token from URL
-        const params = new URLSearchParams(window.location.search);
-        const token = params.get("token");
-
-        if (!token) {
-          setStatus("error");
-          setError("Token not found in URL");
-          setTimeout(() => {
-            window.location.href = "/";
-          }, 3000);
-          return;
-        }
-
-        console.log("TAH callback - token received");
-
-        // Store the TAH token
-        authStorage.setToken(token);
-
-        setStatus("success");
-
-        // Validate token by calling session endpoint
-        try {
-          await getSession();
-          console.log("TAH session validated");
-        } catch (e) {
-          console.warn("Session validation failed, but token stored:", e.message);
-        }
-
-        // Redirect to main page
-        setTimeout(() => {
-          window.location.href = "/";
-        }, 1000);
-      } catch (err) {
-        console.error("TAH callback error:", err);
-        setStatus("error");
-        setError(err.message || "Authentication error");
-
-        // Clear any partial auth state
-        authStorage.clearToken();
-
-        setTimeout(() => {
-          window.location.href = "/";
-        }, 3000);
-      }
-    };
-
-    processCallback();
-  }, []);
-
-  return (
-    <div className="tah-callback-page">
-      <div className="tah-callback-content">
-        {status === "processing" && (
-          <div className="tah-status">
-            <div className="spinner"></div>
-            <h2>Authenticating...</h2>
-            <p>Processing TAH login</p>
-          </div>
-        )}
-
-        {status === "success" && (
-          <div className="tah-status success">
-            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <h2>Authenticated!</h2>
-            <p>Redirecting...</p>
-          </div>
-        )}
-
-        {status === "error" && (
-          <div className="tah-status error">
-            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="10" />
-              <path d="M15 9l-6 6M9 9l6 6" />
-            </svg>
-            <h2>Authentication Error</h2>
-            <p className="error-message">{error}</p>
-            <p>Redirecting to login...</p>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
 
 const genUuid = () => {
   if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();
@@ -536,17 +439,6 @@ function DecisionInbox() {
   );
 }
 
-function App() {
-  // Simple routing based on pathname
-  const path = window.location.pathname;
-
-  // TAH Callback route
-  if (path === "/tah-callback") {
-    return <TahCallback />;
-  }
-
-  // Main app
+export default function App() {
   return <DecisionInbox />;
 }
-
-export default App;

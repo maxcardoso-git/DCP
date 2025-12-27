@@ -406,17 +406,26 @@ async def tah_callback(
 
 @router.get("/auth/session", response_model=SessionInfo)
 async def get_session_info(
-    user: TAHUserInfo = Depends(get_auth_user),
+    user_session: UserSession = Depends(get_current_session),
+    db: AsyncSession = Depends(get_session),
 ):
-    """Get current session information from Bearer token or session cookie."""
+    """Get current session information."""
+    result = await db.execute(
+        select(User).where(User.id == user_session.user_id)
+    )
+    user = result.scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
     return SessionInfo(
-        user_id=user.user_id,
-        org_id=user.org_id,
+        user_id=str(user.id),
+        org_id=user_session.org_id,
         email=user.email,
         name=user.name,
-        roles=user.roles,
-        permissions=user.permissions,
-        tenant_id=user.tenant_id,
+        roles=user_session.tah_roles or [],
+        permissions=user_session.tah_permissions or [],
+        tenant_id=user_session.tenant_id,
     )
 
 
@@ -437,9 +446,9 @@ async def logout(
 
 @router.get("/auth/check")
 async def check_auth(
-    user: Optional[TAHUserInfo] = Depends(get_optional_auth_user),
+    user_session: Optional[UserSession] = Depends(get_optional_session),
 ):
     """Check if user is authenticated (public endpoint)."""
-    if user:
-        return {"authenticated": True, "org_id": user.org_id}
+    if user_session:
+        return {"authenticated": True, "org_id": user_session.org_id}
     return {"authenticated": False}
