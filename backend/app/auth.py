@@ -69,9 +69,11 @@ class TAHTokenValidator:
     _instance: Optional["TAHTokenValidator"] = None
 
     def __init__(self, jwks_url: str, issuer: str, audience: str):
-        self.jwks_client = PyJWKClient(jwks_url, cache_keys=True, lifespan=3600)
+        self.jwks_url = jwks_url
+        self.jwks_client = PyJWKClient(jwks_url, cache_keys=True, lifespan=300)  # 5 min cache
         self.issuer = issuer
         self.audience = audience
+        logger.info(f"TAHTokenValidator initialized: jwks_url={jwks_url}, issuer={issuer}, audience={audience}")
 
     @classmethod
     def get_instance(cls) -> "TAHTokenValidator":
@@ -84,10 +86,21 @@ class TAHTokenValidator:
             )
         return cls._instance
 
-    def validate(self, token: str) -> TAHTokenPayload:
+    @classmethod
+    def reset_instance(cls):
+        """Reset singleton to force JWKS refresh."""
+        cls._instance = None
+        logger.info("TAHTokenValidator instance reset")
+
+    def validate(self, token: str, retry_on_signature_fail: bool = True) -> TAHTokenPayload:
         """Validate JWT token and return payload."""
         try:
+            # Decode header to log kid
+            header = jwt.get_unverified_header(token)
+            logger.info(f"Token header: alg={header.get('alg')}, kid={header.get('kid')}")
+
             signing_key = self.jwks_client.get_signing_key_from_jwt(token)
+            logger.info(f"Found signing key: kid={signing_key.key_id}")
 
             payload = jwt.decode(
                 token,
@@ -102,6 +115,7 @@ class TAHTokenValidator:
             if not payload.get("org_id"):
                 raise ValueError("Missing org_id in token")
 
+            logger.info(f"Token validated successfully for user: {payload.get('email')}")
             return TAHTokenPayload(
                 sub=payload["sub"],
                 email=payload.get("email", ""),
@@ -121,7 +135,16 @@ class TAHTokenValidator:
             raise ValueError(f"Invalid audience. Expected: {self.audience}")
         except jwt.InvalidIssuerError:
             raise ValueError(f"Invalid issuer. Expected: {self.issuer}")
+        except jwt.InvalidSignatureError as e:
+            # Signature failed - try refreshing JWKS cache
+            if retry_on_signature_fail:
+                logger.warning(f"Signature verification failed, refreshing JWKS cache and retrying...")
+                # Create new client to force JWKS refresh
+                self.jwks_client = PyJWKClient(self.jwks_url, cache_keys=True, lifespan=300)
+                return self.validate(token, retry_on_signature_fail=False)
+            raise ValueError(f"Signature verification failed: {e}")
         except Exception as e:
+            logger.error(f"Token validation error: {type(e).__name__}: {e}")
             raise ValueError(f"Token validation failed: {e}")
 
 
